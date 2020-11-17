@@ -1,9 +1,10 @@
 /**************************************************************************
 
- This is a basic example of a menu using a rotary encoder and a OLEDs based on SPI version SSD1306 
- for ESP8266, ESP32 or Arduino
+ This is a basic example of a menu using a rotary encoder and a OLEDs based 
+ on SPI version SSD1306 for ESP8266, ESP32 or Arduino               17Nov20
 
- Note: I have found it only works on Arduino Uno with debug set to 0, so I think it is on the very limits of running out of memory?
+ Note: I have found it only works on Arduino Uno with debug set to 0, so I 
+ think it is on the very limits of running out of memory/resources?
 
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
@@ -15,8 +16,9 @@
             Arduino: 2, 3, 4 (button)
 
  
- The sketch displays a menu on the oled and when an item is selected it sets a flag and waits until
- the event is acted upon.  Max menu items on a 128x64 oled is four.
+ The sketch displays a menu on the oled and when an item is selected it sets a 
+ flag and waits until the event is acted upon.  Max menu items on a 128x64 oled 
+ is four.
  
  To display a menu:
         menuTitle = "Demo Menu";   
@@ -24,10 +26,10 @@
         setMenu(0,"item0");
         setMenu(1,"item1");
  This will set the menu displaying and active.
- When an item is selected and clicked on the variable 'menuItemClicked' is set to the menu item number (between 0 and 3)
- Your sketch can now act upon this event     
+ When an item is selected and clicked on the variable 'menuItemClicked' is set 
+ to the menu item number (between 0 and 3), your sketch can now act upon this event     
         e.g.    if (menuTitle == "Demo Menu" && menuItemClicked==0) {
- Notes: When acting on the event you need to flag this has happened with        menuItemClicked=100;
+ Notes: When acting on the event you need to flag this has happened with: menuItemClicked=100;
         To stop a menu displaying     menuTitle = "";
  
  
@@ -39,7 +41,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-const bool debug=1;              // show debug info on serial 
+const bool debug=0;              // show debug info on serial 
 
 // oled SSD1306 display connected to I2C (SDA, SCL pins)
   #define OLED_ADDR   0x3C
@@ -65,7 +67,7 @@ const bool debug=1;              // show debug info on serial
     #define encoder0PinB  3
     #define encoder0Press  4    // button 
   #else
-    #error Unknown board type
+    #error Un-suported board type
   #endif
 
 volatile int encoder0Pos = 0;             // current value selected with rotary encoder
@@ -102,12 +104,8 @@ void setup() {
    attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE);      // esp32 or esp8266  (encoder0PinA selects gpio pin)
   #endif
 
-  // set up a demo menu
-    menuTitle = "Demo Menu";         // set the menu title
-    setMenu(0,"");                   // clear all menu items
-    setMenu(0,"top");
-    setMenu(1,"menu off");
-    setMenu(2,"menu 2");    
+  menu1();    // start the demo menu
+ 
 }
 
 
@@ -116,38 +114,79 @@ void setup() {
 
 void loop() {
 
-  // display menu on oled
-  if (menuTitle != "") {                                                // if there is a menu active
-    menuCheck();                                                        // check if encoder button pressed
-    menuItemSelection();                                                // check for change in menu item highlighted
-    staticMenu();                                                       // display the menu on the oled
-  } else {
-      // clear oled display
-      display.clearDisplay();
-      display.display();          // update display
-  }
-  
-  // demo use of menu
-    if (menuTitle == "Demo Menu" && menuItemClicked==0) {             // if menu "Demo Menu", item 0 has been clicked
+  // if there is a menu active then display it
+    if (menuTitle != "") { 
+      menuCheck();                                          // check if encoder selection button pressed
+      menuItemSelection();                                  // check for change in menu item highlighted
+      staticMenu();                                         // display the menu on the oled
+    }
+  menuItemSelections();                                     // act if a menu item was selected
+
+  delay(100);
+}
+
+
+//  -------------------------------------------------------------------------------------------
+
+// menu action procedures - your custom menu is set here
+
+void menuItemSelections() {
+
+  // if menu "Demo Menu" item 0 is clicked
+    if (menuTitle == "Demo Menu" && menuItemClicked==0) {             
       menuItemClicked=100;                                            // clear menu item selected flag
       if (debug) Serial.println("Acting on Demo Menu item 0 selection");
     }
+
+  // if menu "Demo Menu" item 1 is clicked
     if (menuTitle == "Demo Menu" && menuItemClicked==1) {
       menuItemClicked=100;                                            
       if (debug) Serial.println("Acting on Demo Menu item 1 selection");
       menuTitle = "";                                                 // turn menu off
+      display.clearDisplay();
+      display.display(); 
     }
-      if (menuTitle == "Demo Menu" && menuItemClicked==2) {
+
+  // if menu "Demo Menu" item 2 is clicked
+    if (menuTitle == "Demo Menu" && menuItemClicked==2) {
       menuItemClicked=100;                                            
       if (debug) Serial.println("Acting on Demo Menu item 2 selection");
-          // show a different menu
-          menuTitle = "Menu 2";  
-          setMenu(0,"");                   // clear all menu items
-          setMenu(0,"item0");
-          setMenu(1,"item1");
+      menu2();                                                        // show a different menu
     }
-    
-  delay(100);
+
+  // if menu "Menu 2" item 1 is clicked
+    if (menuTitle == "Menu 2" && menuItemClicked==1) {
+      menuItemClicked=100;                                            
+      if (debug) Serial.println("Acting on Menu 2 item 1 selection");
+      enterValue();          // enter a value using the rotary encoder
+    }
+
+  // if menu "Menu 2" item 2 is clicked
+    if (menuTitle == "Menu 2" && menuItemClicked==2) {
+      menuItemClicked=100;                                            
+      if (debug) Serial.println("Acting on Menu 2 item 2 selection");
+      menu1();                                                        // show first menu
+    }
+}
+
+
+
+// menu 1
+void menu1() {
+    menuTitle = "Demo Menu";         // set the menu title
+    setMenu(0,"");                   // clear all menu items
+    setMenu(0,"top");                // menu items (max 4)
+    setMenu(1,"menu off");
+    setMenu(2,"menu 2");    
+}
+
+// menu 2
+void menu2() {
+    menuTitle = "Menu 2";  
+    setMenu(0,""); 
+    setMenu(0,"item0");
+    setMenu(1,"value");
+    setMenu(2,"return");
 }
 
 
@@ -157,12 +196,14 @@ void loop() {
 
 // set menu item
 // pass: new menu items number, name         (blank iname clears all)
+
 void setMenu(byte inum, String iname) {
   if (inum >= menuMax) return;    // invalid number
   if (iname == "") {              // clear all
-    for (int i; i < menuMax; i++) {
-      menuOption[i] = "";
-    }
+    for (int i; i < menuMax; i++)  menuOption[i] = "";
+    // clear the oled display
+      display.clearDisplay();
+      display.display(); 
     menuCount = 0;                // move highlight to top menu item
   } else {
     menuOption[inum] = iname;
@@ -170,32 +211,32 @@ void setMenu(byte inum, String iname) {
   }
 }
 
+
 // display menu on oled
 void staticMenu() {
-  display.clearDisplay();
-  
+  display.clearDisplay();  
   // title
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(10, 0);
-  display.print(menuTitle);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(10, 0);
+    display.print(menuTitle);
 
   // menu options
-  display.setTextSize(1);
-  int i=0;
-  while (i < menuMax && menuOption[i] != "") {                                          // if menu item is not blank display it
-    if (i == menuItemClicked) display.setTextColor(BLACK,WHITE);         // if this item has been clicked
-    else display.setTextColor(WHITE,BLACK);
-    display.setCursor(10, 20 + (i*10));
-    display.print(menuOption[i]);
-    i++;
-  }
+    display.setTextSize(1);
+    int i=0;
+    while (i < menuMax && menuOption[i] != "") {                                          // if menu item is not blank display it
+      if (i == menuItemClicked) display.setTextColor(BLACK,WHITE);         // if this item has been clicked
+      else display.setTextColor(WHITE,BLACK);
+      display.setCursor(10, 20 + (i*10));
+      display.print(menuOption[i]);
+      i++;
+    }
 
   // highlighted item if none selected
-  if (menuItemClicked == 100) {
-    display.setCursor(2, (menuCount * 10) + 20);
-    display.print(">");
-  }
+    if (menuItemClicked == 100) {
+      display.setCursor(2, (menuCount * 10) + 20);
+      display.print(">");
+    }
   
   display.display();          // update display
 }
@@ -242,6 +283,36 @@ void menuItemSelection() {
     if (digitalRead(encoder0PinB) == LOW ) encoder0Pos = encoder0Pos + 1;
     else encoder0Pos = encoder0Pos - 1;
   }
+}
+
+
+// enter a value using the rotary encoder
+int enterValue() {
+  display.clearDisplay();  
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(10, 0);
+  display.print("VALUE:");
+  display.display();          // update display
+
+  int tvalue = 0;
+  while (digitalRead(encoder0Press) == HIGH) {
+    if (encoder0Pos > itemTrigger) {
+      encoder0Pos = 0;
+      tvalue++;
+    }
+    if (encoder0Pos < -itemTrigger) {
+      encoder0Pos = 0;
+      tvalue--;
+    }  
+    display.fillRect(10,40,118,20,BLACK);
+    display.setCursor(10, 40);
+    display.print(tvalue);
+    display.display();          // update display
+    delay(50);
+  }
+  return tvalue;
+  
 }
 
 //  -------------------------------------------------------------------------------------------
