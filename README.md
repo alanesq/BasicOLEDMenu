@@ -9,26 +9,27 @@ i.e. io pins and interrupt use
 libraries used: Adafruit_SSD1306 and Adafruit_GFX
 
 
- oled pins on the esp8266 are:  sda=d2, scl=d1    
- oled address = 3C 
- rotary encoder pins: d5, d6, d7 (button)
+oled pins on the esp8266 are:  sda=d2, scl=d1    
+oled address = 3C 
+rotary encoder pins: d5, d6, d7 (button)
 
- 
- The sketch displays a menu on the oled and when an item is selected it sets a flag and waits until
- the event is acted upon.  Max menu items on a 128x64 oled is four.
- 
- To display a menu:
-        menuTitle = "Demo Menu";   
-        setMenu(0,"");                   // clear any current menu items
-        setMenu(0,"item0");
-        setMenu(1,"item1");
- This will set the menu displaying and active.
- When an item is selected and clicked on the variable 'menuItemClicked' is set to the menu item number (between 0 and 3)
- Your sketch can now act upon this event     
-        e.g.    if (menuTitle == "Demo Menu" && menuItemClicked==0) {
- Notes: When acting on the event you need to flag this has happened with        menuItemClicked=100;
-        To stop a menu displaying     menuTitle = "";
- 
- 
- for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
- 
+<pre>
+The sketch displays a menu on the oled and when an item is selected it sets a flag and waits until
+the event is acted upon.  Max menu items on a 128x64 oled is four.
+
+To display a menu:
+    menuTitle = "Demo Menu";   
+    setMenu(0,"");                   // clear any current menu items
+    setMenu(0,"item0");
+    setMenu(1,"item1");
+This will set the menu displaying and active.
+When an item is selected and clicked on the variable 'menuItemClicked' is set to the menu item number (between 0 and 3)
+Your sketch can now act upon this event   
+    e.g.    if (menuTitle == "Demo Menu" && menuItemClicked==0) {
+Notes: When acting on the event you need to flag this has happened with        menuItemClicked=100;
+    To stop a menu displaying     menuTitle = "";
+</pre>
+
+
+for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
+
