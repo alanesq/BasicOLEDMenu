@@ -84,7 +84,8 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.display();
   display.clearDisplay();
-  attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE);      // esp8266 
+  attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE);      // esp32 or esp8266  (encoder0PinA selects gpio pin)
+  // attachInterrupt(0, doEncoder, CHANGE);   // Arduino (gpio pin 2)
 
 
   // set up a demo menu
