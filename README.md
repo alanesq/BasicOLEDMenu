@@ -8,6 +8,8 @@ using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder boar
 
 libraries used: Adafruit_SSD1306 and Adafruit_GFX
 
+
+<pre>
  oled pins: esp8266: sda=d2, scl=d1    
               esp32: sda=21, scl=22
  oled address = 3C 
@@ -15,7 +17,6 @@ libraries used: Adafruit_SSD1306 and Adafruit_GFX
             esp8266: d5, d6, d7 (button)
             esp32: 13, 14, 15
 
-<pre>
 The sketch displays a menu on the oled and when an item is selected it sets a flag and 
 waits until the event is acted upon.  Max menu items on a 128x64 oled is four.
 
