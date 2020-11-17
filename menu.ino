@@ -1,10 +1,13 @@
 /**************************************************************************
 
- This is a basic example of a menu using a rotary encoder and a OLEDs based on SSD1306 
+ This is a basic example of a menu using a rotary encoder and a OLEDs based on SPI version SSD1306 
  
- oled pins: esp8266 = sda-d2, scl-d1    
+ oled pins: esp8266: sda=d2, scl=d1    
+            esp32: sda=21, scl=22
  oled address = 3C 
- rotary encoder pins: 5, 6, 7 (button)
+ rotary encoder pins: 
+            esp8266: d5, d6, d7 (button)
+            esp32: 13, 14, 15
 
  
  The sketch displays a menu on the oled and when an item is selected it sets a flag and waits until
@@ -39,10 +42,22 @@
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// rotary encoder
-#define encoder0PinA  D5
-#define encoder0PinB  D6
-#define encoder0Press  D7                 // button on rotary encoder
+// rotary encoder gpio pins 
+  #if defined(ESP8266)
+    // esp8266
+    #define encoder0PinA  D5
+    #define encoder0PinB  D6
+    #define encoder0Press  D7    // button 
+  #elif defined(ESP32)
+    // esp32
+    #define encoder0PinA  13
+    #define encoder0PinB  14
+    #define encoder0Press  15    // button 
+  #else 
+    // Arduino?
+    #error Invalid board type
+  #endif
+
 volatile int encoder0Pos = 0;             // current value selected with rotary encoder
 
 // menu
