@@ -1,7 +1,5 @@
-<h1>Basic OLED with rotary encoder Menu for ESP8266/ESP32</h1>
-This should also work on other boards with minor modification   i.e. io pins and interrupt useage
-e.g. Arduino UNO the interrupt command would be      attachInterrupt(0, doEncoder, CHANGE);
-
+<h1>Basic OLED with rotary encoder Menu for ESP8266/ESP32/Arduino</h1>
+Note: I have found it only works on my Arduino Uno with debug set to 0, so I think it is on the very limits of running out of memory?
 <p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
@@ -11,11 +9,13 @@ libraries used: Adafruit_SSD1306 and Adafruit_GFX
 
 <pre>
  oled pins: esp8266: sda=d2, scl=d1    
-              esp32: sda=21, scl=22
+            esp32: sda=21, scl=22
+            Arduino: sda=A4, scl=A5
  oled address = 3C 
- rotary encoder pins set to: 
+ rotary encoder pins: 
             esp8266: d5, d6, d7 (button)
             esp32: 13, 14, 15
+            Arduino: 2, 3, 4 (button)
             
 The sketch displays a menu on the oled display and when an item is selected it sets a flag and 
 waits until the event is acted upon.  Max. menu items on a 128x64 oled is four.
