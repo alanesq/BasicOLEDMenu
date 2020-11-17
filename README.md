@@ -5,6 +5,7 @@ using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder boar
 
 The sketch is for an esp8266 but should work on any board with minor modification
 i.e. io pins and interrupt use
+It uses the libraries: Adafruit_SSD1306 and Adafruit_GFX
 
 
  oled pins on the esp8266 are:  sda=d2, scl=d1    
