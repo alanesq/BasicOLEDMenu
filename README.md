@@ -7,6 +7,8 @@ using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder boar
 
 libraries used: Adafruit_SSD1306 and Adafruit_GFX
 
+See the menuItemSelections().procedure for where the menu can be customised including entering values via the rotary encoder.
+
 <pre>
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
