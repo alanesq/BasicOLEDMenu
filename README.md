@@ -1,4 +1,5 @@
-# BasicOLEDMenu
+<h1>Basic OLED with rotary encoder Menu</h1>
+<p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
 using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
