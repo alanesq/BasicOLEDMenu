@@ -5,9 +5,11 @@
 
  Github = https://github.com/alanesq/BasicOLEDMenu
 
- Note: I have found it only works on Arduino Uno with debug set to 0, 
- I think there is some conflict between serial and i2c?
-
+ Note: I had problems when running on an Arduino Uno when debug is set to 1 in
+       that the display would stop working.  I fixed this by making as many of
+       the Sreial.print commands inside 'F()' to store the text in flash.
+       I do not know why this worked as it was not reporting low on memory???
+       
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
             Arduino: sda=A4, scl=A5
@@ -39,11 +41,11 @@
  
 
   **************************************************************************/
-
+  
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-const bool debug=0;              // show debug info on serial 
+const bool debug=1;              // show debug info on serial (does not work on Arduino)
 
 // oled SSD1306 display connected to I2C (SDA, SCL pins)
   #define OLED_ADDR   0x3C
@@ -52,27 +54,27 @@ const bool debug=0;              // show debug info on serial
   #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
   Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// rotary encoder gpio pins 
+// rotary encoder gpio pins depending on board being used
   #if defined(ESP8266)
     // esp8266
     #define encoder0PinA  D5
     #define encoder0PinB  D6
-    #define encoder0Press  D7    // button 
+    #define encoder0Press D7     // button 
   #elif defined(ESP32)
     // esp32
     #define encoder0PinA  13
     #define encoder0PinB  14
-    #define encoder0Press  15    // button 
+    #define encoder0Press 15     // button 
   #elif defined(ARDUINO) 
     // Arduino Uno
-    #define encoder0PinA  2      // must be 2 or 3 on an Arduino Uno
+    #define encoder0PinA  2      // must be 2 or 3 on an Arduino Uno as interrupt used
     #define encoder0PinB  3
     #define encoder0Press 4      // button 
   #else
     #error Unsupported board type
   #endif
 
-volatile int encoder0Pos = 0;               // current value selected with rotary encoder
+volatile int encoder0Pos = 0;               // current value selected with rotary encoder (updated in interrupt routine)
 
 // oled menu
   const byte menuMax = 4;                   // max number of menu items
@@ -82,21 +84,47 @@ volatile int encoder0Pos = 0;               // current value selected with rotar
   String menuTitle = "";                    // current menu ID number (blank = none)
   byte menuItemClicked = 100;               // menu item has been clicked flag (100=none)
 
+//// demo bitmap display
+////    display with: display.drawBitmap((display.width() - LOGO_WIDTH ) / 2, (display.height() - LOGO_HEIGHT) / 2, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+////    utility for creating the data: http://en.radzio.dxp.pl/bitmap_converter/
+//  #define LOGO_HEIGHT   16
+//  #define LOGO_WIDTH    16
+//  static const unsigned char PROGMEM logo_bmp[] =
+//  { B00000000, B11000000,
+//    B00000001, B11000000,
+//    B00000001, B11000000,
+//    B00000011, B11100000,
+//    B11110011, B11100000,
+//    B11111110, B11111000,
+//    B01111110, B11111111,
+//    B00110011, B10011111,
+//    B00011111, B11111100,
+//    B00001101, B01110000,
+//    B00011011, B10100000,
+//    B00111111, B11100000,
+//    B00111111, B11110000,
+//    B01111100, B11110000,
+//    B01110000, B01110000,
+//    B00000000, B00110000 };
+
 
 //  -------------------------------------------------------------------------------------------
 
 
 void setup() {
+  
   if (debug) Serial.begin(115200);
-  if (debug) Serial.println("\n\nDemo menu sketch...");
+  if (debug) Serial.println(F("\n\nDemo menu sketch"));
 
   // gpio pins
     pinMode(encoder0Press, INPUT);
     pinMode(encoder0PinA, INPUT);
     pinMode(encoder0PinB, INPUT);
-    
-    display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
-    delay(20);
+
+  // initialise the oled display
+    if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+      if (debug) Serial.println(F("\nError initialising the oled display"));
+    }
     display.clearDisplay();
     display.display();
 
@@ -104,6 +132,7 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   menu1();    // start the demo menu
+
 }
 
 
@@ -117,64 +146,63 @@ void loop() {
       menuCheck();                                          // check if encoder selection button is pressed
       menuItemSelection();                                  // check for change in menu item highlighted
       staticMenu();                                         // display the menu 
-      menuItemSelections();                                 // act if a menu item has been clicked
+      menuItemActions();                                    // act if a menu item has been clicked
     }
 
 
     
-  delay(100);
+  delay(50);
 }
 
 
 //  -------------------------------------------------------------------------------------------
 
 // menu action procedures - your custom menu is setup here
-//   check if menu item has been selected with:     if (menuTitle == "<menu name>" && menuItemClicked==<item number 1-4>)
+//   check if menu item has been selected with:  if (menuTitle == "<menu name>" && menuItemClicked==<item number 1-4>)
 
-void menuItemSelections() {
+void menuItemActions() {
     
-  if (menuItemClicked == 100) return;                                 // if no menu item has been clicked
+  if (menuItemClicked == 100) return;                               // if no menu item has been clicked
 
+  if (menuTitle == "Demo Menu" && menuItemClicked==1) {
+    menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
+    int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
+    if (debug) Serial.println("Menu: Value set = " + String(tres));
+  }
 
-    if (menuTitle == "Demo Menu" && menuItemClicked==1) {
-      menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
-      int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
-      if (debug) Serial.println("Menu: Value set = " + String(tres));
-    }
+  if (menuTitle == "Demo Menu" && menuItemClicked==2) {
+    menuItemClicked=100;                                            
+    if (debug) Serial.println(F("Menu: Menu 2 selected"));
+    menu2();                                                        // show a different menu
+  }
 
-    if (menuTitle == "Demo Menu" && menuItemClicked==2) {
-      menuItemClicked=100;                                            
-      if (debug) Serial.println("Menu: Menu 2 selected");
-      menu2();                                                        // show a different menu
-    }
+  if (menuTitle == "Menu 2" && menuItemClicked==1) {
+    menuItemClicked=100;                                            
+    if (debug) Serial.println(F("Menu: menu off"));
+    menuTitle = "";                                                 // turn menu off
+    display.clearDisplay();
+    display.display(); 
+  }
 
-    if (menuTitle == "Menu 2" && menuItemClicked==1) {
-      menuItemClicked=100;                                            
-      if (debug) Serial.println("Menu: menu off");
-      menuTitle = "";                                                 // turn menu off
-      display.clearDisplay();
-      display.display(); 
-    }
+  if (menuTitle == "Menu 2" && menuItemClicked==2) {
+    menuItemClicked=100;                                            
+    if (debug) Serial.println(F("Menu: Menu 1 selected"));
+    menu1();                                                        // show first menu
+  }
 
-    if (menuTitle == "Menu 2" && menuItemClicked==2) {
-      menuItemClicked=100;                                            
-      if (debug) Serial.println("Menu: Menu 1 selected");
-      menu1();                                                        // show first menu
-    }
-
-    if (menuItemClicked==0) {                                         // item 0 of any menu
-      menuItemClicked=100; 
-      if (debug) Serial.println("Menu: Item 0 selected on a menu");
-    }
+  if (menuItemClicked==0) {                                         // item 0 of any menu
+    menuItemClicked=100; 
+    if (debug) Serial.println(F("Menu: Item 0 selected on a menu"));
+  }
 
 }
 
 
 // menu 1
 void menu1() {
-    menuTitle = "Demo Menu";         // set the menu title
-    setMenu(0,"");                   // clear all menu items
-    setMenu(0,"no action");          // menu items (max 4)
+    menuTitle = "Demo Menu";                                        // set the menu title
+    setMenu(0,"");                                                  // clear all menu items
+    setMenu(0,"no action");                                         // menu items (max 4)
     setMenu(1,"enter a value");
     setMenu(2,"MENU 2");    
 }
@@ -213,7 +241,7 @@ void setMenu(byte inum, String iname) {
 
 // display menu on oled
 void staticMenu() {
-  display.clearDisplay();  
+  display.clearDisplay(); 
   // title
     display.setTextSize(2);
     display.setTextColor(WHITE);
@@ -238,6 +266,7 @@ void staticMenu() {
     }
   
   display.display();          // update display
+  
 }
 
 
@@ -274,7 +303,7 @@ void menuItemSelection() {
 #else
  ICACHE_RAM_ATTR void doEncoder() {
 #endif
-  if (debug) Serial.print("i");              // swow interup triggered on serial 
+  if (debug) Serial.print("i");              // swow interrupt triggered on serial 
   if (digitalRead(encoder0PinA) == HIGH) {
     if (digitalRead(encoder0PinB) == LOW) encoder0Pos = encoder0Pos - 1;
     else encoder0Pos = encoder0Pos + 1;
