@@ -1,13 +1,12 @@
 /**************************************************************************
 
  This is a basic example of a menu using a rotary encoder and a OLEDs based 
- on SPI version SSD1306 for ESP8266, ESP32 or Arduino               18Nov20
+ on i2c version SSD1306 for ESP8266, ESP32 or Arduino               18Nov20
 
  Github = https://github.com/alanesq/BasicOLEDMenu
 
- Note: I have found it only works on Arduino Uno with debug set to 0, so I 
- think it is on the very limits of running out of memory/resources or there
- is some conflict between serial and i2c?
+ Note: I have found it only works on Arduino Uno with debug set to 0, 
+ I think there is some conflict between serial and i2c?
 
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
@@ -66,16 +65,16 @@ const bool debug=0;              // show debug info on serial
     #define encoder0Press  15    // button 
   #elif defined(ARDUINO) 
     // Arduino Uno
-    #define encoder0PinA  2
+    #define encoder0PinA  2      // must be 2 or 3 on an Arduino Uno
     #define encoder0PinB  3
-    #define encoder0Press  4    // button 
+    #define encoder0Press 4      // button 
   #else
-    #error Un-suported board type
+    #error Unsupported board type
   #endif
 
-volatile int encoder0Pos = 0;             // current value selected with rotary encoder
+volatile int encoder0Pos = 0;               // current value selected with rotary encoder
 
-// menu
+// oled menu
   const byte menuMax = 4;                   // max number of menu items
   String menuOption[menuMax];               // options displayed in menu
   byte menuCount = 0;                       // which menu item is curently highlighted 
@@ -102,14 +101,9 @@ void setup() {
     display.display();
 
   // Interrupt for rotary encoder
-  #if defined(ARDUINO) 
-    attachInterrupt(0, doEncoder, CHANGE);   // Arduino (gpio pin 2)
-  #else
-   attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE);      // esp32 or esp8266  (encoder0PinA selects gpio pin)
-  #endif
+    attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   menu1();    // start the demo menu
- 
 }
 
 
@@ -143,8 +137,8 @@ void menuItemSelections() {
 
 
     if (menuTitle == "Demo Menu" && menuItemClicked==1) {
-      menuItemClicked=100;               
-      int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, lowest possible, highest possible)
+      menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
+      int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
       if (debug) Serial.println("Menu: Value set = " + String(tres));
     }
 
@@ -229,7 +223,7 @@ void staticMenu() {
   // menu options
     display.setTextSize(1);
     int i=0;
-    while (i < menuMax && menuOption[i] != "") {                                          // if menu item is not blank display it
+    while (i < menuMax && menuOption[i] != "") {                           // if menu item is not blank display it
       if (i == menuItemClicked) display.setTextColor(BLACK,WHITE);         // if this item has been clicked
       else display.setTextColor(WHITE,BLACK);
       display.setCursor(10, 20 + (i*10));
@@ -292,14 +286,14 @@ void menuItemSelection() {
 
 
 // enter a value using the rotary encoder
-//   pass Value title, starting value, lowest possible , highest possible
-//   returns the selected value
+//   pass Value title, starting value, low limit , high limit
+//   returns the chosen value
 int enterValue(String title, int start, int low, int high) {
   // display title
     display.clearDisplay();  
     display.setTextSize(2);
     display.setTextColor(WHITE);
-    display.setCursor(10, 0);
+    display.setCursor(0, 0);
     display.print(title);
     display.display();                                  // update display
   int tvalue = start;
@@ -314,8 +308,9 @@ int enterValue(String title, int start, int low, int high) {
     }  
     if (tvalue > high) tvalue=high;
     if (tvalue < low) tvalue=low;
-    display.fillRect(10,40,118,20,BLACK);
-    display.setCursor(10, 40);
+    display.setTextSize(4);
+    display.fillRect(0,32,128,32,BLACK);                // clear bottom half of display (128x64)
+    display.setCursor(0, 32);
     display.print(tvalue);
     display.display();                                   // update display
     delay(50);
