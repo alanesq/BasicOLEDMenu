@@ -7,7 +7,7 @@ using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder boar
 
 libraries used: Adafruit_SSD1306 and Adafruit_GFX
 
-Thanks to:  https://create.arduino.cc/projecthub/yilmazyurdakul/arduino-oled-encoder-simple-menu-system-f9baa1?f=1#comments
+Thanks to:  https://create.arduino.cc/projecthub/yilmazyurdakul/arduino-oled-encoder-simple-menu-system-f9baa1
 which I used as a starting point for this project.
 
 See the menuItemSelections().procedure for where the menu can be customised including entering values via the rotary encoder.
