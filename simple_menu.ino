@@ -6,6 +6,7 @@
  Github = https://github.com/alanesq/BasicOLEDMenu
 
  Note: The very limit memory on an Arduino Uno proved to be a problem and you have to disable DEBUG to have enough free memory for this to work
+       I suspect the GFX library is too much for a Uno really?
        
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
@@ -39,7 +40,7 @@
 
   **************************************************************************/
 
-#include <MemoryFree.h>
+//#include <MemoryFree.h>                     // used to display free memory on Arduino (useful as it can be very limited)
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
@@ -86,7 +87,7 @@ const String SketchVersion = "18Nov20";     // Sketch Title
 
 //// demo bitmap displaying
 ////    display with: display.drawBitmap((display.width() - LOGO_WIDTH ) / 2, (display.height() - LOGO_HEIGHT) / 2, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-////    utility for creating the data: http://en.radzio.dxp.pl/bitmap_converter/
+////    utility for creating the data: http://javl.github.io/image2cpp/ or http://en.radzio.dxp.pl/bitmap_converter/
 //  #define LOGO_HEIGHT   16
 //  #define LOGO_WIDTH    16
 //  static const unsigned char PROGMEM logo_bmp[] =
@@ -112,9 +113,19 @@ const String SketchVersion = "18Nov20";     // Sketch Title
 
 
 void setup() {
-   
-  if (debug) Serial.begin(115200);
-  if (debug) Serial.println(F("\n\nDemo menu sketch"));
+
+  // show sketch title on serial if debug is enabled 
+  if (debug) {
+    Serial.begin(115200);
+    Serial.println("\n\n" + SketchTitle);
+    Serial.println(SketchVersion);
+    //Serial.print("Mem: ");
+    //Serial.println(freeMemory());         // display free memory on Arduino
+  }
+
+  #if defined(ARDUINO)
+    if (debug) Serial.println(F("Note: Disable debug if problems with oled"));
+  #endif
 
   // configure gpio pins
     pinMode(encoder0Press, INPUT);
@@ -126,7 +137,7 @@ void setup() {
       if (debug) Serial.println(("\nError initialising the oled display"));
     }
 
-  // Interrupt for rotary encoder
+  // Interrupt for reading the rotary encoder
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   // Display splash screen on OLED
@@ -137,12 +148,12 @@ void setup() {
     display.print(SketchTitle);
     display.setCursor(0, 20);
     display.print(SketchVersion);
-    display.setCursor(0, 40);
-    display.print(freeMemory());
+    //display.setCursor(0, 40);
+    //display.print(freeMemory());
     display.display();
     delay(2000);
 
-  menu1();    // start the demo menu
+  menu1();    // start the menu displaying - see menuItemActions() to customise the menus
 
 }
 
@@ -173,47 +184,55 @@ void loop() {
 
 void menuItemActions() {
     
-  if (menuItemClicked == 100) return;                               // if no menu item has been clicked
+  if (menuItemClicked == 100) return;                                 // if no menu item has been clicked exit function
 
-  if (menuTitle == "Demo Menu" && menuItemClicked==1) {
-    menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
-    int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
-    if (debug) Serial.println("Menu: Value set = " + String(tres));
-  }
 
-  if (menuTitle == "Demo Menu" && menuItemClicked==2) {
-    menuItemClicked=100;                                            
-    if (debug) Serial.println(F("Menu: Menu 2 selected"));
-    menu2();                                                        // show a different menu
-  }
+  //  --------------------- Menu 1 Actions ---------------------
+  
+    if (menuTitle == "Menu 1" && menuItemClicked==1) {
+      menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
+      int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
+      if (debug) Serial.println("Menu: Value set = " + String(tres));
+    }
+  
+    if (menuTitle == "Menu 1" && menuItemClicked==2) {
+      menuItemClicked=100;                                            
+      if (debug) Serial.println(F("Menu: Menu 2 selected"));
+      menu2();                                                        // show a different menu
+    }
+    
+  //  --------------------- Menu 2 Actions ---------------------
+  
+    if (menuTitle == "Menu 2" && menuItemClicked==1) {
+      menuItemClicked=100;                                            
+      if (debug) Serial.println(F("Menu: menu off"));
+      menuTitle = "";                                                 // turn menu off
+      display.clearDisplay();
+      display.display(); 
+    }
+  
+    if (menuTitle == "Menu 2" && menuItemClicked==2) {
+      menuItemClicked=100;                                            
+      if (debug) Serial.println(F("Menu: Menu 1 selected"));
+      menu1();                                                        // show first menu
+    }
 
-  if (menuTitle == "Menu 2" && menuItemClicked==1) {
-    menuItemClicked=100;                                            
-    if (debug) Serial.println(F("Menu: menu off"));
-    menuTitle = "";                                                 // turn menu off
-    display.clearDisplay();
-    display.display(); 
-  }
+  //  ------------------ Combined Menu Actions ----------------
+  
+    if (menuItemClicked==0) {                                         // item 0 of any menu
+      menuItemClicked=100; 
+      if (debug) Serial.println(F("Menu: Item 0 selected on any menu"));
+    }
 
-  if (menuTitle == "Menu 2" && menuItemClicked==2) {
-    menuItemClicked=100;                                            
-    if (debug) Serial.println(F("Menu: Menu 1 selected"));
-    menu1();                                                        // show first menu
-  }
-
-  if (menuItemClicked==0) {                                         // item 0 of any menu
-    menuItemClicked=100; 
-    if (debug) Serial.println(F("Menu: Item 0 selected on any menu"));
-  }
+   //  ---------------------------------------------------------
 
 }
 
-
 // menu 1
 void menu1() {
-    menuTitle = "Demo Menu";                                        // set the menu title
-    setMenu(0,"");                                                  // clear all menu items
-    setMenu(0,"no action");                                         // menu items (max 4)
+    menuTitle = "Menu 1";                                        // set the menu title
+    setMenu(0,"");                                               // clear all menu items
+    setMenu(0,"no action");                                      // menu items (max of 4)
     setMenu(1,"enter a value");
     setMenu(2,"MENU 2");    
 }
@@ -249,6 +268,7 @@ void setMenu(byte inum, String iname) {
   }
 }
 
+//  --------------------------------------
 
 // display menu on oled
 void staticMenu() {
@@ -270,16 +290,16 @@ void staticMenu() {
       i++;
     }
 
-  // highlighted item if none selected
+  // highlighted item if none yet clicked
     if (menuItemClicked == 100) {
       display.setCursor(2, (menuCount * 10) + 20);
       display.print(">");
     }
   
   display.display();          // update display
-  
 }
 
+//  --------------------------------------
 
 // menu button pressed
 void menuCheck() {
@@ -293,6 +313,7 @@ void menuCheck() {
   while (digitalRead(encoder0Press) == LOW);                        // wait for button release
 }
 
+//  --------------------------------------
 
 // handle menu item selection
 void menuItemSelection() {
@@ -307,6 +328,7 @@ void menuItemSelection() {
     }
 }   
 
+//  --------------------------------------
 
 // rotary encoder interrupt routine to update counter when turned
 #if defined(ARDUINO) 
@@ -324,6 +346,7 @@ void menuItemSelection() {
   }
 }
 
+//  --------------------------------------
 
 // enter a value using the rotary encoder
 //   pass Value title, starting value, low limit , high limit
