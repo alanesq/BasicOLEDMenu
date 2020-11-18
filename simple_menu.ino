@@ -60,16 +60,19 @@ const String SketchVersion = "18Nov20";     // Sketch Title
   volatile int encoder0Pos = 0;             // current value selected with rotary encoder (updated in interrupt routine)
   #if defined(ESP8266)
     // esp8266
+    const String boardType="ESP8266";
     #define encoder0PinA  D5
     #define encoder0PinB  D6
     #define encoder0Press D7                // button 
   #elif defined(ESP32)
     // esp32
+    const String boardType="ESP32";
     #define encoder0PinA  13
     #define encoder0PinB  14
     #define encoder0Press 15                // button 
-  #elif defined(ARDUINO) 
+  #elif defined (__AVR_ATmega328P__)
     // Arduino Uno
+    const String boardType="Arduino";
     #define encoder0PinA  2                 // this must be 2 or 3 on an Arduino Uno as interrupt used
     #define encoder0PinB  3
     #define encoder0Press 4                 // button 
@@ -122,10 +125,9 @@ void setup() {
     //Serial.print("Mem: ");
     //Serial.println(freeMemory());         // display free memory on Arduino
   }
+Serial.println(boardType);
 
-  #if defined(ARDUINO)
-    if (debug) Serial.println(F("Note: Disable debug if problems with oled"));
-  #endif
+    if (debug && boardType == "Arduino") Serial.println(F("Note: Disable debug if problems with oled"));
 
   // configure gpio pins
     pinMode(encoder0Press, INPUT);
@@ -136,10 +138,7 @@ void setup() {
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
       if (debug) Serial.println(("\nError initialising the oled display"));
     }
-
-  // Interrupt for reading the rotary encoder
-    attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
-
+    
   // Display splash screen on OLED
     display.clearDisplay();
     display.setTextSize(2);
@@ -152,6 +151,9 @@ void setup() {
     //display.print(freeMemory());
     display.display();
     delay(2000);
+
+  // Interrupt for reading the rotary encoder
+    attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   menu1();    // start the menu displaying - see menuItemActions() to customise the menus
 
@@ -331,7 +333,7 @@ void menuItemSelection() {
 //  --------------------------------------
 
 // rotary encoder interrupt routine to update counter when turned
-#if defined(ARDUINO) 
+#if defined (__AVR_ATmega328P__)
   void doEncoder() {
 #else
  ICACHE_RAM_ATTR void doEncoder() {
