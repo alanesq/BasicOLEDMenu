@@ -1,14 +1,11 @@
 /**************************************************************************
 
  This is a basic example of a menu using a rotary encoder and a OLEDs based 
- on i2c version SSD1306 for ESP8266, ESP32 or Arduino               18Nov20
+ on i2c version SSD1306 for ESP8266, ESP32 or Arduino               
 
  Github = https://github.com/alanesq/BasicOLEDMenu
 
- Note: I had problems when running on an Arduino Uno when debug is set to 1 in
-       that the display would stop working.  I fixed this by making as many of
-       the Sreial.print commands inside 'F()' to store the text in flash.
-       I do not know why this worked as it was not reporting low on memory???
+ Note: The very limit memory on an Arduino Uno proved to be a problem and you have to disable DEBUG to have enough free memory for this to work
        
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
@@ -41,41 +38,44 @@
  
 
   **************************************************************************/
-  
+
+#include <MemoryFree.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-const bool debug=1;              // show debug info on serial (does not work on Arduino)
+bool debug=1;                               // show debug info on serial (does not work on Arduino as there is not enough memory)
+const String SketchTitle = "SimpleMenu";    // Sketch Title
+const String SketchVersion = "18Nov20";     // Sketch Title
+
 
 // oled SSD1306 display connected to I2C (SDA, SCL pins)
-  #define OLED_ADDR   0x3C
-  #define SCREEN_WIDTH 128 // OLED display width, in pixels
-  #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-  #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+  #define OLED_ADDR 0x3C                    // OLED i2c address
+  #define SCREEN_WIDTH 128                  // OLED display width, in pixels
+  #define SCREEN_HEIGHT 64                  // OLED display height, in pixels
+  #define OLED_RESET -1                     // Reset pin # (or -1 if sharing Arduino reset pin)
   Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// rotary encoder gpio pins depending on board being used
+// rotary encoder, gpio pins vary depending on board being used
+  volatile int encoder0Pos = 0;             // current value selected with rotary encoder (updated in interrupt routine)
   #if defined(ESP8266)
     // esp8266
     #define encoder0PinA  D5
     #define encoder0PinB  D6
-    #define encoder0Press D7     // button 
+    #define encoder0Press D7                // button 
   #elif defined(ESP32)
     // esp32
     #define encoder0PinA  13
     #define encoder0PinB  14
-    #define encoder0Press 15     // button 
+    #define encoder0Press 15                // button 
   #elif defined(ARDUINO) 
     // Arduino Uno
-    #define encoder0PinA  2      // must be 2 or 3 on an Arduino Uno as interrupt used
+    #define encoder0PinA  2                 // this must be 2 or 3 on an Arduino Uno as interrupt used
     #define encoder0PinB  3
-    #define encoder0Press 4      // button 
+    #define encoder0Press 4                 // button 
   #else
     #error Unsupported board type
   #endif
-
-volatile int encoder0Pos = 0;               // current value selected with rotary encoder (updated in interrupt routine)
-
+  
 // oled menu
   const byte menuMax = 4;                   // max number of menu items
   String menuOption[menuMax];               // options displayed in menu
@@ -84,7 +84,7 @@ volatile int encoder0Pos = 0;               // current value selected with rotar
   String menuTitle = "";                    // current menu ID number (blank = none)
   byte menuItemClicked = 100;               // menu item has been clicked flag (100=none)
 
-//// demo bitmap display
+//// demo bitmap displaying
 ////    display with: display.drawBitmap((display.width() - LOGO_WIDTH ) / 2, (display.height() - LOGO_HEIGHT) / 2, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
 ////    utility for creating the data: http://en.radzio.dxp.pl/bitmap_converter/
 //  #define LOGO_HEIGHT   16
@@ -112,24 +112,35 @@ volatile int encoder0Pos = 0;               // current value selected with rotar
 
 
 void setup() {
-  
+   
   if (debug) Serial.begin(115200);
   if (debug) Serial.println(F("\n\nDemo menu sketch"));
 
-  // gpio pins
+  // configure gpio pins
     pinMode(encoder0Press, INPUT);
     pinMode(encoder0PinA, INPUT);
     pinMode(encoder0PinB, INPUT);
 
   // initialise the oled display
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-      if (debug) Serial.println(F("\nError initialising the oled display"));
+      if (debug) Serial.println(("\nError initialising the oled display"));
     }
-    display.clearDisplay();
-    display.display();
 
   // Interrupt for rotary encoder
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
+
+  // Display splash screen on OLED
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.setCursor(0, 0);
+    display.print(SketchTitle);
+    display.setCursor(0, 20);
+    display.print(SketchVersion);
+    display.setCursor(0, 40);
+    display.print(freeMemory());
+    display.display();
+    delay(2000);
 
   menu1();    // start the demo menu
 
@@ -339,12 +350,11 @@ int enterValue(String title, int start, int low, int high) {
     if (tvalue < low) tvalue=low;
     display.setTextSize(3);
     const int textPos = 27;                             // height of number on display
-    display.fillRect(0, textPos, SCREEN_WIDTH, textPos, BLACK);   // clear bottom half of display (128x64)
+    display.fillRect(0, textPos, SCREEN_WIDTH, SCREEN_HEIGHT - textPos, BLACK);   // clear bottom half of display (128x64)
     display.setCursor(0, textPos);
     display.print(tvalue);
     // bar graph at bottom of display
       int tmag=map(tvalue, low, high, 0 ,SCREEN_WIDTH);
-      display.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10, BLACK);  
       display.fillRect(0, SCREEN_HEIGHT - 10, tmag, 10, WHITE);  
     display.display();                                  // update display
     delay(50);
