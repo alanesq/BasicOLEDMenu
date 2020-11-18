@@ -1,5 +1,4 @@
 <h1>Basic OLED with rotary encoder Menu for ESP8266/ESP32/Arduino</h1>
-Note: I have found it only works on my Arduino Uno with debug set to 0, so I think it is on the very limits of running out of memory?
 <p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
@@ -37,6 +36,10 @@ item number (between 0 and 3), your sketch can now act upon this event
     e.g.    if (menuTitle == "Demo Menu" && menuItemClicked==0) {
 Notes: When acting on the event you need to flag this has happened with:   menuItemClicked=100;
        To stop a menu displaying:     menuTitle = "";
+       I had some problems when running on an Arduino Uno when debug is set to 1 in
+       that the display would stop working.  I fixed this by making as many of
+       the Sreial.print commands inside 'F()' to store the text in flash.
+       I do not know why this worked as it was not reporting low on memory???
 </pre>
 
 for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
