@@ -192,7 +192,7 @@ void menuItemActions() {
 
   if (menuItemClicked==0) {                                         // item 0 of any menu
     menuItemClicked=100; 
-    if (debug) Serial.println(F("Menu: Item 0 selected on a menu"));
+    if (debug) Serial.println(F("Menu: Item 0 selected on any menu"));
   }
 
 }
@@ -337,14 +337,19 @@ int enterValue(String title, int start, int low, int high) {
     }  
     if (tvalue > high) tvalue=high;
     if (tvalue < low) tvalue=low;
-    display.setTextSize(4);
-    display.fillRect(0,32,128,32,BLACK);                // clear bottom half of display (128x64)
-    display.setCursor(0, 32);
+    display.setTextSize(3);
+    const int textPos = 27;                             // height of number on display
+    display.fillRect(0, textPos, SCREEN_WIDTH, textPos, BLACK);   // clear bottom half of display (128x64)
+    display.setCursor(0, textPos);
     display.print(tvalue);
-    display.display();                                   // update display
+    // bar graph at bottom of display
+      int tmag=map(tvalue, low, high, 0 ,SCREEN_WIDTH);
+      display.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10, BLACK);  
+      display.fillRect(0, SCREEN_HEIGHT - 10, tmag, 10, WHITE);  
+    display.display();                                  // update display
     delay(50);
   }
-  while (digitalRead(encoder0Press) == LOW);             // wait for button release
+  while (digitalRead(encoder0Press) == LOW);            // wait for button release
   return tvalue;
 }
 
