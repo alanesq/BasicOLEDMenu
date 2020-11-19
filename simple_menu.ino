@@ -44,9 +44,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-bool debug=1;                               // show debug info on serial (does not work on Arduino as there is not enough memory)
+bool oledDebug=1;                           // show debug info on serial (does not work on Arduino as there is not enough memory)
 const String SketchTitle = "SimpleMenu";    // Sketch Title
-const String SketchVersion = "18Nov20";     // Sketch Title
+const String SketchVersion = "19Nov20";     // Sketch Title
 
 
 // oled SSD1306 display connected to I2C (SDA, SCL pins)
@@ -58,6 +58,9 @@ const String SketchVersion = "18Nov20";     // Sketch Title
 
 // rotary encoder, gpio pins vary depending on board being used
   volatile int encoder0Pos = 0;             // current value selected with rotary encoder (updated in interrupt routine)
+  bool reButtonState = 0;                   // current debounced state of the button
+  uint32_t reButtonTimer = millis();        // time button state last changed
+  int reButtonMinTime = 500;                // minimum milliseconds between allowed button status changes
   #if defined(ESP8266)
     // esp8266
     const String boardType="ESP8266";
@@ -77,7 +80,7 @@ const String SketchVersion = "18Nov20";     // Sketch Title
     #define encoder0PinB  3
     #define encoder0Press 4                 // button 
   #else
-    #error Unsupported board type
+    #error Unsupported board - must be esp32, esp8266 or Arduino Uno
   #endif
   
 // oled menu
@@ -118,16 +121,16 @@ const String SketchVersion = "18Nov20";     // Sketch Title
 void setup() {
 
   // show sketch title on serial if debug is enabled 
-  if (debug) {
+  if (oledDebug) {
     Serial.begin(115200);
     Serial.println("\n\n" + SketchTitle);
     Serial.println(SketchVersion);
-    //Serial.print("Mem: ");
+    Serial.println(boardType);
+    //Serial.print("Free mem: ");
     //Serial.println(freeMemory());         // display free memory on Arduino
   }
-Serial.println(boardType);
 
-    if (debug && boardType == "Arduino") Serial.println(F("Note: Disable debug if problems with oled"));
+    if (oledDebug && boardType == "Arduino") Serial.println(F("Note: Disable debug if problems with oled"));
 
   // configure gpio pins
     pinMode(encoder0Press, INPUT);
@@ -136,7 +139,7 @@ Serial.println(boardType);
 
   // initialise the oled display
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-      if (debug) Serial.println(("\nError initialising the oled display"));
+      if (oledDebug) Serial.println(("\nError initialising the oled display"));
     }
     
   // Display splash screen on OLED
@@ -145,9 +148,12 @@ Serial.println(boardType);
     display.setTextColor(WHITE);
     display.setCursor(0, 0);
     display.print(SketchTitle);
+    display.setTextSize(1);
     display.setCursor(0, 20);
     display.print(SketchVersion);
-    //display.setCursor(0, 40);
+    display.setCursor(0, 30);
+    display.print(boardType);
+    display.setCursor(0, 40);
     //display.print(freeMemory());
     display.display();
     delay(2000);
@@ -155,7 +161,7 @@ Serial.println(boardType);
   // Interrupt for reading the rotary encoder
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
-  menu1();    // start the menu displaying - see menuItemActions() to customise the menus
+  menu1();    // start the menu displaying - see menuItemActions() to alter the menus
 
 }
 
@@ -173,7 +179,9 @@ void loop() {
       menuItemActions();                                    // act if a menu item has been clicked
     }
 
-
+  
+  //     <<< your code here >>>>
+  
     
   delay(50);
 }
@@ -194,12 +202,12 @@ void menuItemActions() {
     if (menuTitle == "Menu 1" && menuItemClicked==1) {
       menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
       int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
-      if (debug) Serial.println("Menu: Value set = " + String(tres));
+      if (oledDebug) Serial.println("Menu: Value set = " + String(tres));
     }
   
     if (menuTitle == "Menu 1" && menuItemClicked==2) {
       menuItemClicked=100;                                            
-      if (debug) Serial.println(F("Menu: Menu 2 selected"));
+      if (oledDebug) Serial.println(F("Menu: Menu 2 selected"));
       menu2();                                                        // show a different menu
     }
     
@@ -207,7 +215,7 @@ void menuItemActions() {
   
     if (menuTitle == "Menu 2" && menuItemClicked==1) {
       menuItemClicked=100;                                            
-      if (debug) Serial.println(F("Menu: menu off"));
+      if (oledDebug) Serial.println(F("Menu: menu off"));
       menuTitle = "";                                                 // turn menu off
       display.clearDisplay();
       display.display(); 
@@ -215,7 +223,7 @@ void menuItemActions() {
   
     if (menuTitle == "Menu 2" && menuItemClicked==2) {
       menuItemClicked=100;                                            
-      if (debug) Serial.println(F("Menu: Menu 1 selected"));
+      if (oledDebug) Serial.println(F("Menu: Menu 1 selected"));
       menu1();                                                        // show first menu
     }
 
@@ -223,7 +231,7 @@ void menuItemActions() {
   
     if (menuItemClicked==0) {                                         // item 0 of any menu
       menuItemClicked=100; 
-      if (debug) Serial.println(F("Menu: Item 0 selected on any menu"));
+      if (oledDebug) Serial.println(F("Menu: Item 0 selected on any menu"));
     }
 
    //  ---------------------------------------------------------
@@ -260,9 +268,6 @@ void setMenu(byte inum, String iname) {
   if (inum >= menuMax) return;    // invalid number
   if (iname == "") {              // clear all
     for (int i; i < menuMax; i++)  menuOption[i] = "";
-    // clear the oled display
-      display.clearDisplay();
-      display.display(); 
     menuCount = 0;                // move highlight to top menu item
   } else {
     menuOption[inum] = iname;
@@ -303,16 +308,24 @@ void staticMenu() {
 
 //  --------------------------------------
 
-// menu button pressed
+// rotary encoder button pressed
+
 void menuCheck() {
-  // debounce the button
-    if (digitalRead(encoder0Press) == HIGH) return;
-    delay(40);
-    if (digitalRead(encoder0Press) == HIGH) return; 
-  if (menuItemClicked != 100 || menuTitle == "") return;            // item already selected or no live menu
-  if (debug) Serial.println("menu '" + menuTitle + "' item " + String(menuCount) + " selected");
-  menuItemClicked = menuCount;                                      // set item selected flag
-  while (digitalRead(encoder0Press) == LOW);                        // wait for button release
+  if (digitalRead(encoder0Press) == reButtonState) return;      // no change
+  delay(40);
+  if (digitalRead(encoder0Press) == reButtonState) return;      // debounce
+  if (millis() - reButtonTimer  < reButtonMinTime) return;      // if too soon since last change
+
+  // button status has changed
+  reButtonState = !reButtonState;   
+  reButtonTimer = millis();                                     // update timer
+
+  // oled menu action on button press 
+  if (reButtonState==LOW) {                                     // if button is now pressed                             
+    if (menuItemClicked != 100 || menuTitle == "") return;      // menu item already selected or no live menu
+    if (oledDebug) Serial.println("menu '" + menuTitle + "' item " + String(menuCount) + " selected");
+    menuItemClicked = menuCount;                                // set item selected flag
+  }
 }
 
 //  --------------------------------------
@@ -338,7 +351,7 @@ void menuItemSelection() {
 #else
  ICACHE_RAM_ATTR void doEncoder() {
 #endif
-  if (debug) Serial.print("i");              // swow interrupt triggered on serial 
+  if (oledDebug) Serial.print("i");              // swow interrupt triggered on serial 
   if (digitalRead(encoder0PinA) == HIGH) {
     if (digitalRead(encoder0PinB) == LOW) encoder0Pos = encoder0Pos - 1;
     else encoder0Pos = encoder0Pos + 1;
@@ -353,7 +366,10 @@ void menuItemSelection() {
 // enter a value using the rotary encoder
 //   pass Value title, starting value, low limit , high limit
 //   returns the chosen value
+
 int enterValue(String title, int start, int low, int high) {
+  const int timeout = 20000;                           // max time in ms that the value change can display without change
+  uint32_t tTimer = millis();                          // log time of start of function
   // display title
     display.clearDisplay();  
     display.setTextSize(2);
@@ -362,16 +378,20 @@ int enterValue(String title, int start, int low, int high) {
     display.print(title);
     display.display();                                  // update display
   int tvalue = start;
-  while (digitalRead(encoder0Press) == HIGH) {          // while button is not pressed
+  while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(5);    // wait for button release
+  tTimer = millis();
+  while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) {   // while button is not pressed and still within time limit
     if (encoder0Pos > itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
       encoder0Pos = 0;
       tvalue++;
+      tTimer = millis(); 
     }
     if (encoder0Pos < -itemTrigger) {
       encoder0Pos = 0;
       tvalue--;
+      tTimer = millis();
     }  
-    if (tvalue > high) tvalue=high;
+    if (tvalue > high) tvalue=high;                     // value limits
     if (tvalue < low) tvalue=low;
     display.setTextSize(3);
     const int textPos = 27;                             // height of number on display
@@ -384,7 +404,7 @@ int enterValue(String title, int start, int low, int high) {
     display.display();                                  // update display
     delay(50);
   }
-  while (digitalRead(encoder0Press) == LOW);            // wait for button release
+  // while (digitalRead(encoder0Press) == LOW);            // wait for button release
   return tvalue;
 }
 
