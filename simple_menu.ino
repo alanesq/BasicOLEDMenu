@@ -187,9 +187,40 @@ void loop() {
 }
 
 
-//  -------------------------------------------------------------------------------------------
 
-// menu action procedures - your custom menu is setup here
+// -------------------------------------------------------------------------------------------------
+//                                        customise the menus below
+// -------------------------------------------------------------------------------------------------
+
+  
+// Menus
+
+  // menu 1
+  void menu1() {
+      menuTitle = "Menu 1";                                        // set the menu title
+      setMenu(0,"");                                               // clear all menu items
+      setMenu(0,"list");                                           // choose from a list
+      setMenu(1,"enter a value");                                  // enter a value
+      setMenu(2,"message");                                        // display a message
+      setMenu(3,"MENU 2");                                         // change menu
+  }
+
+  
+  // menu 2
+  void menu2() {
+      menuTitle = "Menu 2";  
+      setMenu(0,""); 
+      setMenu(0,"menu off");
+      setMenu(1,"RETURN");
+  }
+
+
+  
+// -------------------------------------------------------------------------------------------------
+
+
+
+// menu action procedures
 //   check if menu item has been selected with:  if (menuTitle == "<menu name>" && menuItemClicked==<item number 1-4>)
 
 void menuItemActions() {
@@ -198,7 +229,15 @@ void menuItemActions() {
 
 
   //  --------------------- Menu 1 Actions ---------------------
-  
+
+    if (menuTitle == "Menu 1" && menuItemClicked==0) {
+      menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
+      if (oledDebug) Serial.println("Menu: choose from list");
+      String q[] = {"item0","item1","item2","item3","item4","item5","item6","item7"};
+      int tres=chooseFromList(8, "TestList", q);
+      if (oledDebug) Serial.println("Menu: item " + String(tres) + " chosen from list");
+    }
+    
     if (menuTitle == "Menu 1" && menuItemClicked==1) {
       menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
       int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
@@ -206,14 +245,32 @@ void menuItemActions() {
     }
   
     if (menuTitle == "Menu 1" && menuItemClicked==2) {
+      menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
+      if (oledDebug) Serial.println(F("Menu: display message selected"));
+      // display a message
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.setTextColor(WHITE);
+        display.setCursor(20, 20);
+        display.print("Hello");
+        display.display();
+      // wait for key press
+        int timeout = 20000;                                                                         // timeout in ms
+        uint32_t tTimer = millis();                                                                  // log time
+        while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(20);    // wait for button release
+        while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) delay(20);   // wait for button press with timeout
+    }
+
+    if (menuTitle == "Menu 1" && menuItemClicked==3) {
       menuItemClicked=100;                                            
       if (oledDebug) Serial.println(F("Menu: Menu 2 selected"));
       menu2();                                                        // show a different menu
     }
+
     
   //  --------------------- Menu 2 Actions ---------------------
   
-    if (menuTitle == "Menu 2" && menuItemClicked==1) {
+    if (menuTitle == "Menu 2" && menuItemClicked==0) {
       menuItemClicked=100;                                            
       if (oledDebug) Serial.println(F("Menu: menu off"));
       menuTitle = "";                                                 // turn menu off
@@ -221,40 +278,20 @@ void menuItemActions() {
       display.display(); 
     }
   
-    if (menuTitle == "Menu 2" && menuItemClicked==2) {
+    if (menuTitle == "Menu 2" && menuItemClicked==1) {
       menuItemClicked=100;                                            
       if (oledDebug) Serial.println(F("Menu: Menu 1 selected"));
       menu1();                                                        // show first menu
     }
 
-  //  ------------------ Combined Menu Actions ----------------
-  
-    if (menuItemClicked==0) {                                         // item 0 of any menu
-      menuItemClicked=100; 
-      if (oledDebug) Serial.println(F("Menu: Item 0 selected on any menu"));
-    }
-
-   //  ---------------------------------------------------------
-
 }
 
-// menu 1
-void menu1() {
-    menuTitle = "Menu 1";                                        // set the menu title
-    setMenu(0,"");                                               // clear all menu items
-    setMenu(0,"no action");                                      // menu items (max of 4)
-    setMenu(1,"enter a value");
-    setMenu(2,"MENU 2");    
-}
 
-// menu 2
-void menu2() {
-    menuTitle = "Menu 2";  
-    setMenu(0,""); 
-    setMenu(0,"no action");
-    setMenu(1,"menu off");
-    setMenu(2,"RETURN");
-}
+// -------------------------------------------------------------------------------------------------
+//                                        customise the menus above
+// -------------------------------------------------------------------------------------------------
+
+
 
 
 //  -------------------------------------------------------------------------------------------
@@ -366,7 +403,6 @@ void menuItemSelection() {
 // enter a value using the rotary encoder
 //   pass Value title, starting value, low limit , high limit
 //   returns the chosen value
-
 int enterValue(String title, int start, int low, int high) {
   const int timeout = 20000;                           // max time in ms that the value change can display without change
   uint32_t tTimer = millis();                          // log time of start of function
@@ -391,8 +427,9 @@ int enterValue(String title, int start, int low, int high) {
       tvalue--;
       tTimer = millis();
     }  
-    if (tvalue > high) tvalue=high;                     // value limits
-    if (tvalue < low) tvalue=low;
+    // value limits
+      if (tvalue > high) tvalue=high;              
+      if (tvalue < low) tvalue=low;
     display.setTextSize(3);
     const int textPos = 27;                             // height of number on display
     display.fillRect(0, textPos, SCREEN_WIDTH, SCREEN_HEIGHT - textPos, BLACK);   // clear bottom half of display (128x64)
@@ -408,4 +445,65 @@ int enterValue(String title, int start, int low, int high) {
   return tvalue;
 }
 
-//  -------------------------------------------------------------------------------------------
+
+//  --------------------------------------
+
+
+// choose from list using rotary encoder
+//  pass the number of items in list (max 8), list title, list of options in a string array
+
+int chooseFromList(byte noOfElements, String listTitle, String list[]) {
+  
+  const int timeout = 20000;                             // max time in ms that the value change can display without change
+  uint32_t tTimer = millis();                            // log time of start of function
+  int highlightedItem = 0;                               // which item in list is highlighted
+  int lineSpacing = ((64 - 20) / 4);
+  int xpos, ypos;
+  
+  // display title
+    display.clearDisplay();  
+    display.setTextSize(2);
+    display.setTextColor(WHITE,BLACK);
+    display.setCursor(0, 0);
+    display.print(listTitle);
+
+  // scroll through list
+    while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(5);    // wait for button release
+    tTimer = millis();
+    while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) {   // while button is not pressed and still within time limit
+      if (encoder0Pos > itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
+        encoder0Pos = 0;
+        highlightedItem++;
+        tTimer = millis(); 
+      }
+      if (encoder0Pos < -itemTrigger) {
+        encoder0Pos = 0;
+        highlightedItem--;
+        tTimer = millis();
+      }  
+      // value limits
+        if (highlightedItem > noOfElements - 1) highlightedItem = noOfElements - 1;        
+        if (highlightedItem < 0) highlightedItem = 0;
+      // display the list
+        for (int i=0; i < noOfElements; i++) {
+            if (i < 4) {
+              xpos = 0; 
+              ypos = 20 + (lineSpacing * i);
+            } else {
+              xpos = 128 / 2;
+              ypos = 20 + (lineSpacing * (i - 4));
+            }
+            display.setCursor(xpos, ypos);
+            display.setTextSize(1);
+            if (i == highlightedItem) display.setTextColor(BLACK,WHITE);
+            else display.setTextColor(WHITE,BLACK);
+            display.print(list[i]);
+        }
+      display.display();                                    // update display
+      delay(50);
+    }
+    return highlightedItem;
+}
+
+
+// ---------------------------------------------- end ----------------------------------------------
