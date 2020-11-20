@@ -6,11 +6,11 @@ A very simple to use, cheap to build and simple to wire menu system using an ole
 using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
 
 libraries used: Adafruit_SSD1306 and Adafruit_GFX
+See the "customise the menus below" section of the sketch for examples of how to use it.
+It gives basic menus, the ability to enter a numerical value or choose from a list of options.
 
 Thanks to:  https://create.arduino.cc/projecthub/yilmazyurdakul/arduino-oled-encoder-simple-menu-system-f9baa1
 which I used as a starting point for this project.
-
-See the menuItemSelections().procedure for where the menu can be customised including entering values via the rotary encoder.
 
 <pre>
  oled pins: esp8266: sda=d2, scl=d1    
@@ -25,18 +25,7 @@ See the menuItemSelections().procedure for where the menu can be customised incl
 The sketch displays a menu on the oled display and when an item is selected it sets a flag and 
 waits until the event is acted upon.  Max. menu items on a 128x64 oled is four.
 
-To display a menu:
-    menuTitle = "Demo Menu";   
-    setMenu(0,"");                   // clear any current menu items
-    setMenu(0,"item0");
-    setMenu(1,"item1");
-This will set the menu displaying and active.
-
-When an item is selected and clicked on the variable 'menuItemClicked' is set to the menu 
-item number (between 0 and 3), your sketch can now act upon this event   
-    e.g.    if (menuTitle == "Demo Menu" && menuItemClicked==0) {
-Notes: When acting on the event you need to flag this has happened with:   menuItemClicked=100;
-       To stop a menu displaying:     menuTitle = "";
+BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of interes: https://github.com/alanesq/BasicWebserver
 
 </pre>
 
