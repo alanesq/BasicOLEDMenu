@@ -2,6 +2,7 @@
 Note: The very limit memory on an Arduino Uno proved to be a problem and you have to disable DEBUG to have enough free memory for this to work
 <p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
+<pre>
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
 using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
 
@@ -12,7 +13,6 @@ It gives basic menus, the ability to enter a numerical value or choose from a li
 Thanks to:  https://create.arduino.cc/projecthub/yilmazyurdakul/arduino-oled-encoder-simple-menu-system-f9baa1
 which I used as a starting point for this project.
 
-<pre>
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
             Arduino: sda=A4, scl=A5
