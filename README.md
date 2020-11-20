@@ -25,9 +25,10 @@ which I used as a starting point for this project.
 The sketch displays a menu on the oled display and when an item is selected it sets a flag and 
 waits until the event is acted upon.  Max. menu items on a 128x64 oled is four.
 
-If you are new to the esp8266 using one of these oled displays would be a very interesting and cheap introduction to using them.
-If you search eBay for "esp8266 nodemcu ch340g v3" you should be able to pick up an esp8266 module for around £3 delivered
-and search for "SSD1306 i2c" and you should be able to pick up an oled display like the one in the picture above for around £3 delivered.
+If you are new to the esp8266 using one of these OLED displays would be a very interesting and cheap introduction to using them.
+If you search eBay for "esp8266 nodemcu ch340g v3" you should be able to pick up an esp8266 module for around £3.
+Search for "SSD1306 i2c" and you should be able to pick up an oled display like the one in the picture above for around £3.
+Search for "ky-040" for a rotary encoder for around £1.
 </pre>
 
 BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of interest: https://github.com/alanesq/BasicWebserver
