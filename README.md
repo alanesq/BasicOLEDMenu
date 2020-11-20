@@ -25,9 +25,9 @@ which I used as a starting point for this project.
 The sketch displays a menu on the oled display and when an item is selected it sets a flag and 
 waits until the event is acted upon.  Max. menu items on a 128x64 oled is four.
 
-BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of interes: https://github.com/alanesq/BasicWebserver
-
 </pre>
+
+BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of interest: https://github.com/alanesq/BasicWebserver
 
 for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
 
