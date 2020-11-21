@@ -6,7 +6,10 @@ Note: The very limit memory on an Arduino Uno proved to be a problem and you hav
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
 using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
 
-libraries used: Adafruit_SSD1306 and Adafruit_GFX
+Uses libraries:   Adafruit_SSD1306 and Adafruit_GFX_Library
+ESP8266 addon package = v2.5.2     (I find problems if useing a newer version)
+    from http://arduino.esp8266.com/stable/package_esp8266com_index.json
+    
 See the "customise the menus below" section of the sketch for examples of how to use it.
 It gives basic menus, the ability to enter a numerical value or choose from a list of options.
 
