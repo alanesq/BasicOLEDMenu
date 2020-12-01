@@ -41,7 +41,7 @@
   **************************************************************************/
 
 const String stitle = "simple_menu";         // script title
-const String sversion = "21Nov20";           // script version
+const String sversion = "01Dec20";           // script version
 
 //#include <MemoryFree.h>                     // used to display free memory on Arduino (useful as it can be very limited)
 const bool oledDebug=1;                      // debug enable on serial for oled.h
@@ -85,7 +85,7 @@ const bool oledDebug=1;                      // debug enable on serial for oled.
   // forward declarations
     void doEncoder();
     void setMenu(byte, String);
-    int enterValue(String, int, int, int);
+    int enterValue(String, int, int, int, int);
     void menuItemSelection();
     void menuCheck();
     void staticMenu();
@@ -246,7 +246,7 @@ void menuItemActions() {
     
     if (menuTitle == "Main Menu" && menuItemClicked==1) {
       menuItemClicked=100;                                            // flag that the button press has been actioned (the menu stops and waits until this)             
-      int tres=enterValue("Testval", 15, 0, 30);                      // enter a value (title, start value, low limit, high limit)
+      int tres=enterValue("Testval", 1, 50, 0, 100);                  // enter a value (title, start value, step size, low limit, high limit)
       Serial.println("Menu: Value set = " + String(tres));
     }
   
@@ -416,9 +416,9 @@ void menuItemSelection() {
 //  --------------------------------------
 
 // enter a value using the rotary encoder
-//   pass Value title, starting value, low limit , high limit
+//   pass Value title, starting value, step size, low limit , high limit
 //   returns the chosen value
-int enterValue(String title, int start, int low, int high) {
+int enterValue(String title, int start, int stepSize, int low, int high) {
   const int timeout = 20000;                           // max time in ms that the value change can display without change
   uint32_t tTimer = millis();                          // log time of start of function
   // display title
@@ -434,13 +434,13 @@ int enterValue(String title, int start, int low, int high) {
   tTimer = millis();
   while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) {   // while button is not pressed and still within time limit
     if (encoder0Pos > itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
-      encoder0Pos = 0;
-      tvalue++;
+      tvalue-=stepSize;
+      encoder0Pos -= itemTrigger;
       tTimer = millis(); 
-    }
-    if (encoder0Pos < -itemTrigger) {
-      encoder0Pos = 0;
-      tvalue--;
+    } 
+    else if (encoder0Pos < -itemTrigger) {
+      tvalue+=stepSize;
+      encoder0Pos += itemTrigger;
       tTimer = millis();
     }  
     // value limits
