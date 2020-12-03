@@ -41,7 +41,9 @@
   **************************************************************************/
 
 const String stitle = "simple_menu";         // script title
-const String sversion = "01Dec20";           // script version
+const String sversion = "03Dec20";           // script version
+
+int OLEDDisplayTimeout = 5;                  // timeout on the oled display (seconds)
 
 //#include <MemoryFree.h>                     // used to display free memory on Arduino (useful as it can be very limited)
 const bool oledDebug=1;                      // debug enable on serial for oled.h
@@ -87,7 +89,7 @@ const bool oledDebug=1;                      // debug enable on serial for oled.
     void setMenu(byte, String);
     int enterValue(String, int, int, int, int);
     void menuItemSelection();
-    void menuCheck();
+    bool menuCheck();
     void staticMenu();
     void oledLineText(byte, bool, String);
     int chooseFromList(byte, String, String[]);
@@ -340,7 +342,7 @@ void staticMenu() {
       display.setCursor(2, 12 + (menuCount * lineSpace1));
       display.print(">");
     }
-  
+ 
   display.display();          // update display
 }
 
@@ -348,32 +350,48 @@ void staticMenu() {
 
 // rotary encoder button
 
-void menuCheck() {
-  if (digitalRead(encoder0Press) == reButtonState) return;      // no change
+bool menuCheck() {
+  if (digitalRead(encoder0Press) == reButtonState) return 0;    // no change
   delay(40);
-  if (digitalRead(encoder0Press) == reButtonState) return;      // debounce
-  if (millis() - reButtonTimer  < reButtonMinTime) return;      // if too soon since last change
+  if (digitalRead(encoder0Press) == reButtonState) return 0;    // debounce
+  if (millis() - reButtonTimer  < reButtonMinTime) return 0;    // if too soon since last change
 
   // button status has changed
   reButtonState = !reButtonState;   
   reButtonTimer = millis();                                     // update timer
-  lastREActivity = millis();                                    // log time last activity seen
 
   // oled menu action on button press 
-  if (reButtonState==LOW) {                                     // if button is now pressed                             
-    if (menuItemClicked != 100 || menuTitle == "") return;      // menu item already selected or no live menu
-    if (oledDebug) Serial.println("menu '" + menuTitle + "' item " + String(menuCount) + " selected");
+  if (reButtonState==LOW) {                                     // if button is now pressed      
+    lastREActivity = millis();                                  // log time last activity seen (don't count button release as activity)
+    if (menuItemClicked != 100 || menuTitle == "") return 1;    // menu item already selected or there is no live menu
+    Serial.println("menu '" + menuTitle + "' item " + String(menuCount) + " selected");
     menuItemClicked = menuCount;                                // set item selected flag
   }
+  return 1;
 }
+
+
+//  --------------------------------------
 
 
 // wait for key press on rotary encoder
 //    pass timeout in ms
 void reWaitKeypress(int timeout) {          
-        uint32_t tTimer = millis();                                                                  // log time
-        while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(20);    // wait for button release
-        while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) delay(20);   // wait for button press with timeout
+        uint32_t tTimer = millis();   // log time
+        // wait for button to be released
+          while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) {        // wait for button release
+            yield();                  // service any web page requests
+            delay(20);
+          }
+        // clear rotary encoder position counter
+          noInterrupts();
+            encoder0Pos = 0;       
+          interrupts();
+        // wait for button to be pressed or encoder to be turned
+          while ( (digitalRead(encoder0Press) == HIGH) && (encoder0Pos == 0) && (millis() - tTimer < timeout) ) {
+            yield();                  // service any web page requests
+            delay(20);
+          }
 }
 
 
@@ -382,18 +400,22 @@ void reWaitKeypress(int timeout) {
 // handle menu item selection
 
 void menuItemSelection() {
-    if (encoder0Pos > itemTrigger) {
-      encoder0Pos = 0;
+    if (encoder0Pos >= itemTrigger) {
+      noInterrupts();
+        encoder0Pos = 0;
+      interrupts();
       lastREActivity = millis();                            // log time last activity seen
       if (menuCount+1 < menuMax) menuCount++;               // if not past max menu items move
       if (menuOption[menuCount] == "") menuCount--;         // if menu item is blank move back
     }
-    if (encoder0Pos < -itemTrigger) {
-      encoder0Pos = 0;
+    if (encoder0Pos <= -itemTrigger) {
+      noInterrupts();
+        encoder0Pos = 0;
+      interrupts();
       lastREActivity = millis();                            // log time last activity seen
       if (menuCount > 0) menuCount--;
     }
-}   
+} 
 
 //  --------------------------------------
 
@@ -403,13 +425,12 @@ void menuItemSelection() {
 #else
  ICACHE_RAM_ATTR void doEncoder() {
 #endif
-  if (oledDebug) Serial.print("i");              // swow interrupt triggered on serial 
   if (digitalRead(encoder0PinA) == HIGH) {
-    if (digitalRead(encoder0PinB) == LOW) encoder0Pos = encoder0Pos - 1;
-    else encoder0Pos = encoder0Pos + 1;
+    if (digitalRead(encoder0PinB) == LOW) encoder0Pos -= 1;
+    else encoder0Pos += 1;
   } else {
-    if (digitalRead(encoder0PinB) == LOW ) encoder0Pos = encoder0Pos + 1;
-    else encoder0Pos = encoder0Pos - 1;
+    if (digitalRead(encoder0PinB) == LOW ) encoder0Pos += 1;
+    else encoder0Pos -= 1;
   }
 }
 
@@ -419,7 +440,6 @@ void menuItemSelection() {
 //   pass Value title, starting value, step size, low limit , high limit
 //   returns the chosen value
 int enterValue(String title, int start, int stepSize, int low, int high) {
-  const int timeout = 20000;                           // max time in ms that the value change can display without change
   uint32_t tTimer = millis();                          // log time of start of function
   // display title
     display.clearDisplay();  
@@ -430,17 +450,21 @@ int enterValue(String title, int start, int stepSize, int low, int high) {
     display.print(title);
     display.display();                                  // update display
   int tvalue = start;
-  while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(5);    // wait for button release
+  while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < (OLEDDisplayTimeout * 1000)) ) delay(5);    // wait for button release
   tTimer = millis();
-  while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) {   // while button is not pressed and still within time limit
-    if (encoder0Pos > itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
-      tvalue-=stepSize;
-      encoder0Pos -= itemTrigger;
+  while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < (OLEDDisplayTimeout * 1000)) ) {   // while button is not pressed and still within time limit
+    if (encoder0Pos >= itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
+      tvalue -= stepSize;
+      noInterrupts();                                   // stop interrupt changing the value whilst it is changed here
+        encoder0Pos -= itemTrigger;
+      interrupts();
       tTimer = millis(); 
     } 
-    else if (encoder0Pos < -itemTrigger) {
-      tvalue+=stepSize;
-      encoder0Pos += itemTrigger;
+    else if (encoder0Pos <= -itemTrigger) {
+      tvalue += stepSize;
+      noInterrupts();
+        encoder0Pos += itemTrigger;
+      interrupts();
       tTimer = millis();
     }  
     // value limits
@@ -455,10 +479,8 @@ int enterValue(String title, int start, int stepSize, int low, int high) {
       int tmag=map(tvalue, low, high, 0 ,SCREEN_WIDTH);
       display.fillRect(0, SCREEN_HEIGHT - 10, tmag, 10, WHITE);  
     display.display();                                  // update display
-    delay(50);
+    yield();                                            // service any web page requests
   }
-  // while (digitalRead(encoder0Press) == LOW);            // wait for button release
-  lastREActivity = millis();
   return tvalue;
 }
 
@@ -470,7 +492,6 @@ int enterValue(String title, int start, int stepSize, int low, int high) {
 int chooseFromList(byte noOfElements, String listTitle, String list[]) {
 
   const byte noList = 10;                                // max number of items to list
-  const int timeout = 20000;                             // max time in ms that the value change can display without change
   uint32_t tTimer = millis();                            // log time of start of function
   int highlightedItem = 0;                               // which item in list is highlighted
   int xpos, ypos;
@@ -484,16 +505,20 @@ int chooseFromList(byte noOfElements, String listTitle, String list[]) {
     display.drawLine(0, lineSpace1, display.width(), lineSpace1, WHITE);
 
   // scroll through list
-    while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < timeout) ) delay(5);    // wait for button release
+    while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < (OLEDDisplayTimeout * 1000)) ) delay(5);    // wait for button release
     tTimer = millis();
-    while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < timeout) ) {   // while button is not pressed and still within time limit
-      if (encoder0Pos > itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
-        encoder0Pos = 0;
+    while ( (digitalRead(encoder0Press) == HIGH) && (millis() - tTimer < (OLEDDisplayTimeout * 1000)) ) {   // while button is not pressed and still within time limit
+      if (encoder0Pos >= itemTrigger) {                    // encoder0Pos is updated via the interrupt procedure
+        noInterrupts();
+          encoder0Pos = 0;
+        interrupts();
         highlightedItem++;
         tTimer = millis(); 
       }
-      if (encoder0Pos < -itemTrigger) {
-        encoder0Pos = 0;
+      if (encoder0Pos <= -itemTrigger) {
+        noInterrupts();
+          encoder0Pos = 0;
+        interrupts();
         highlightedItem--;
         tTimer = millis();
       }  
@@ -515,9 +540,19 @@ int chooseFromList(byte noOfElements, String listTitle, String list[]) {
             display.print(list[i]);
         }
       display.display();                                    // update display
-      delay(50);
+      yield();                                              // service any web page requests
     }
-    lastREActivity = millis();
+  
+  // if it timed out set selection to cancel (i.e. item 0)
+    if (millis() - tTimer >= (OLEDDisplayTimeout * 1000)) highlightedItem=0;      
+
+//  // wait for button to be released (up to 1 second)
+//    tTimer = millis();                         // log time
+//    while ( (digitalRead(encoder0Press) == LOW) && (millis() - tTimer < 1000) ) {
+//      yield();        // service any web page requests
+//      delay(20);
+//    }
+
     return highlightedItem;
 }
 
