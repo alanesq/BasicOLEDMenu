@@ -70,7 +70,7 @@ choose from a list or display a message.
   
   // oled menu
     const byte menuMax = 5;                   // max number of menu items
-    const byte lineSpace1 = 10;               // line spacing (6 lines)
+    const byte lineSpace1 = 9;                // line spacing (6 lines)
     const byte lineSpace2 = 16;               // line spacing (4 lines)
     String menuOption[menuMax];               // options displayed in menu
     byte menuCount = 0;                       // which menu item is curently highlighted 
@@ -292,14 +292,14 @@ void staticMenu() {
     while (i < menuMax && menuOption[i] != "") {                           // if menu item is not blank display it
       if (i == menuItemClicked) display.setTextColor(BLACK,WHITE);         // if this item has been clicked
       else display.setTextColor(WHITE,BLACK);
-      display.setCursor(10, 12 + (i*lineSpace1));
+      display.setCursor(10, 18 + (i*lineSpace1));
       display.print(menuOption[i]);
       i++;
     }
 
   // highlighted item if none yet clicked
     if (menuItemClicked == 100) {
-      display.setCursor(2, 12 + (menuCount * lineSpace1));
+      display.setCursor(2, 18 + (menuCount * lineSpace1));
       display.print(">");
     }
  
@@ -483,10 +483,10 @@ int chooseFromList(byte noOfElements, String listTitle, String list[]) {
         for (int i=0; i < noOfElements; i++) {
             if (i < (noList/2)) {
               xpos = 0; 
-              ypos = lineSpace1 * (i+1) + 2;
+              ypos = lineSpace1 * (i+1) + 7;
             } else {
               xpos = display.width() / 2;
-              ypos = lineSpace1 * (i-((noList/2)-1)) + 2;
+              ypos = lineSpace1 * (i-((noList/2)-1)) + 7;
             }
             display.setCursor(xpos, ypos);
             if (i == highlightedItem) display.setTextColor(BLACK,WHITE);
