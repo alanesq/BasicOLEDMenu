@@ -38,4 +38,7 @@ BTW - I have incorporated all this in to my basicWebserver starting point sketch
 
 for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
 
+I have a large gap at the top for use on the two colour oled displays (which tend to be cheaper ;-)
+
+
                                                                                   https://github.com/alanesq/BasicOLEDMenu
