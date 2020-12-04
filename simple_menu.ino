@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 20Nov20
+ *      OLED display Menu System - i2c version SSD1306 - 04Dec20
  * 
  *      part of the BasicWebserver sketch
  *                                   
@@ -11,8 +11,9 @@
             esp32: sda=21, scl=22
  oled address = 3C 
  rotary encoder pins: 
-            esp8266: d5, d6, d7 (button)
+            esp8266: d5, d6, d3 (button)
             esp32: 13, 14, 15
+ Note: leaving d7 and d8 free to use on standard esp8266 development board (nodemcu) 
 
  
  The sketch displays a menu on the oled and when an item is selected it sets a 
@@ -49,6 +50,8 @@ choose from a list or display a message.
   
   // rotary encoder, gpio pins vary depending on board being used
     volatile int16_t encoder0Pos = 0;         // current value selected with rotary encoder (updated in interrupt routine)
+    volatile bool encoderPrevA = 0;           // used to debounced rotary encoder 
+    volatile bool encoderPrevB = 0;           // used to debounced rotary encoder 
     bool reButtonState = 0;                   // current debounced state of the button
     uint32_t reButtonTimer = millis();        // time button state last changed
     int reButtonMinTime = 500;                // minimum milliseconds between allowed button status changes
@@ -57,7 +60,7 @@ choose from a list or display a message.
       const String boardType="ESP8266";
       #define encoder0PinA  D5
       #define encoder0PinB  D6
-      #define encoder0Press D7                // button 
+      #define encoder0Press D3                // button 
     #elif defined(ESP32)
       // esp32
       const String boardType="ESP32";
@@ -529,17 +532,20 @@ void exitMenu() {
 
 //  --------------------------------------
 
-
 // rotary encoder interrupt routine to update counter when turned
+//    debounced - this interrupt triggers when pin a changes, at this time pin b will always be stable so only count  
+//                it if pin b has changed - see http://www.technoblogy.com/show?1YHJ
 
- ICACHE_RAM_ATTR void doEncoder() {
-  // if (serialDebug) Serial.print("i");              // show interrupt triggered on serial 
-  if (digitalRead(encoder0PinA) == HIGH) {
-    if (digitalRead(encoder0PinB) == LOW) encoder0Pos -= 1;
-    else encoder0Pos += 1;
-  } else {
-    if (digitalRead(encoder0PinB) == LOW ) encoder0Pos += 1;
-    else encoder0Pos -= 1;
+ICACHE_RAM_ATTR void doEncoder() {
+  bool pinA = digitalRead(encoder0PinA);
+  bool pinB = digitalRead(encoder0PinB);
+  if (pinA != encoderPrevA) {
+    encoderPrevA = pinA;
+    if (pinB != encoderPrevB) {
+      encoderPrevB = pinB;
+      if (pinA == pinB) encoder0Pos += 1;
+      else encoder0Pos -= 1;
+    }
   }
 }
 
