@@ -1,19 +1,19 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 04Dec20
+ *      OLED display Menu System - i2c version SSD1306 - 06Dec20
  * 
- *      part of the BasicWebserver sketch
- *                                   
- * 
+ *             https://github.com/alanesq/BasicOLEDMenu                      
+ *             
+ *             
  **************************************************************************************************
       
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
  oled address = 3C 
  rotary encoder pins: 
-            esp8266: d5, d6, d3 (button)
+            esp8266: d5, d6, d7 (button)
             esp32: 13, 14, 15
- Note: leaving d7 and d8 free to use on standard esp8266 development board (nodemcu) 
+ Note: on esp8266 you can change the button from d7 to d3 instead leaving d7 and d8 free to use 
 
  
  The sketch displays a menu on the oled and when an item is selected it sets a 
@@ -61,7 +61,7 @@ choose from a list or display a message.
       const String boardType="ESP8266";
       #define encoder0PinA  D5
       #define encoder0PinB  D6
-      #define encoder0Press D3                // button 
+      #define encoder0Press D7                // button - Note: on esp8266 you can change this from d7 to d3 leaving d7 and d8 free to use 
     #elif defined(ESP32)
       // esp32
       const String boardType="ESP32";
@@ -226,12 +226,10 @@ void setup() {
     display.setCursor(0, lineSpace1 * 5);
     //display.print(freeMemory());
     display.display();
-    delay(1500);
+    delay(2500);
 
   // Interrupt for reading the rotary encoder position
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
-    encoderPrevA = digitalRead(encoder0PinA);
-    encoderPrevB = digitalRead(encoder0PinB);
 
   Main_Menu();    // start the menu displaying - see menuItemActions() to alter the menus
 }
@@ -535,41 +533,51 @@ void exitMenu() {
 
 //  --------------------------------------
 
-// rotary encoder interrupt routine to update counter when turned
-//    debounced - this interrupt triggers when pin a changes, at this time pin b will always be stable so only count  
-//                it if pin b has changed - see http://www.technoblogy.com/show?1YHJ
+// rotary encoder interrupt routine to update position counter when turned
 
-#if defined (__AVR_ATmega328P__)
-  void doEncoder() {
+#if defined ESP32
+  IRAM_ATTR void doEncoder() {
 #else
- ICACHE_RAM_ATTR void doEncoder() {
+  ICACHE_RAM_ATTR void doEncoder() {
 #endif
-     
+      
   bool pinA = digitalRead(encoder0PinA);
   bool pinB = digitalRead(encoder0PinB);
+
+  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
+  
   if (serialDebug){
     Serial.print(pinA);
     Serial.print(",");
     Serial.println(pinB);
   }
 
-  // deal with direction change otherwise first position upon change of direction has no effect
-    if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
+  // change of direction
     if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
     if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
     if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;  
-    
-  if (pinA != encoderPrevA) {
+    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
+  // same direction
+    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
+
+  // update previous readings
     encoderPrevA = pinA;
-    if (pinB != encoderPrevB) {
-      encoderPrevB = pinB;
-      if (pinA == pinB) encoder0Pos += 1;
-      else encoder0Pos -= 1;
-    }
-  }
-  
+    encoderPrevB = pinB;
+
 }
 
+
+// // alternative method (doesn't handle change of direction very well)
+//  if (pinA != encoderPrevA) {
+//    encoderPrevA = pinA;
+//    if (pinB != encoderPrevB) {
+//      encoderPrevB = pinB;
+//      if (pinA == pinB) encoder0Pos += 1;
+//      else encoder0Pos -= 1;
+//    }
+//  }
 
 // ---------------------------------------------- end ----------------------------------------------
