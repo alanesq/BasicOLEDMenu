@@ -25,6 +25,7 @@ choose from a list or display a message.
  
 
  for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
+                     or: https://lastminuteengineers.com/oled-display-esp32-tutorial/
 
 
  
@@ -33,7 +34,7 @@ choose from a list or display a message.
   // settings
 
   const String stitle = "simple_menu";         // script title
-  const String sversion = "03Dec20";           // script version
+  const String sversion = "06Dec20";           // script version
 
   bool serialDebug = 1;                        // enable debug info on serial port
 
@@ -229,6 +230,8 @@ void setup() {
 
   // Interrupt for reading the rotary encoder position
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
+    encoderPrevA = digitalRead(encoder0PinA);
+    encoderPrevB = digitalRead(encoder0PinB);
 
   Main_Menu();    // start the menu displaying - see menuItemActions() to alter the menus
 }
@@ -536,9 +539,27 @@ void exitMenu() {
 //    debounced - this interrupt triggers when pin a changes, at this time pin b will always be stable so only count  
 //                it if pin b has changed - see http://www.technoblogy.com/show?1YHJ
 
-ICACHE_RAM_ATTR void doEncoder() {
+#if defined (__AVR_ATmega328P__)
+  void doEncoder() {
+#else
+ ICACHE_RAM_ATTR void doEncoder() {
+#endif
+     
   bool pinA = digitalRead(encoder0PinA);
   bool pinB = digitalRead(encoder0PinB);
+  if (serialDebug){
+    Serial.print(pinA);
+    Serial.print(",");
+    Serial.println(pinB);
+  }
+
+  // deal with direction change otherwise first position upon change of direction has no effect
+    if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
+    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;  
+    
   if (pinA != encoderPrevA) {
     encoderPrevA = pinA;
     if (pinB != encoderPrevB) {
@@ -547,6 +568,7 @@ ICACHE_RAM_ATTR void doEncoder() {
       else encoder0Pos -= 1;
     }
   }
+  
 }
 
 
