@@ -535,7 +535,9 @@ void exitMenu() {
 
 // rotary encoder interrupt routine to update position counter when turned
 
-#if defined ESP32
+#if defined (__AVR_ATmega328P__)
+  void doEncoder() {
+#elif defined ESP32
   IRAM_ATTR void doEncoder() {
 #else
   ICACHE_RAM_ATTR void doEncoder() {
