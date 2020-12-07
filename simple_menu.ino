@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 06Dec20
+ *      OLED display Menu System - i2c version SSD1306 - 07Dec20
  * 
  *             https://github.com/alanesq/BasicOLEDMenu                      
  *             
@@ -229,6 +229,8 @@ void setup() {
     delay(2500);
 
   // Interrupt for reading the rotary encoder position
+    encoderPrevA = digitalRead(encoder0PinA);    // update previous states 
+    encoderPrevB = digitalRead(encoder0PinB);
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   Main_Menu();    // start the menu displaying - see menuItemActions() to alter the menus
@@ -538,32 +540,27 @@ void exitMenu() {
 #if defined (__AVR_ATmega328P__)
   void doEncoder() {
 #elif defined ESP32
-  IRAM_ATTR void doEncoder() {
+  void IRAM_ATTR doEncoder() {
 #else
-  ICACHE_RAM_ATTR void doEncoder() {
+  void ICACHE_RAM_ATTR doEncoder() {
 #endif
       
   bool pinA = digitalRead(encoder0PinA);
   bool pinB = digitalRead(encoder0PinB);
 
-  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
-  
-  if (serialDebug){
-    Serial.print(pinA);
-    Serial.print(",");
-    Serial.println(pinB);
-  }
+  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change since last time (i.e. bounce)
 
+  // same direction (alternating between 0,1 and 1,0 in one direction or 1,1 and 0,0 in the other direction)
+         if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 1) encoder0Pos += 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 0) encoder0Pos += 1;
+    
   // change of direction
-    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
-  // same direction
-    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 0) encoder0Pos += 1;   
+    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 1) encoder0Pos += 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
 
   // update previous readings
     encoderPrevA = pinA;
