@@ -42,49 +42,55 @@ choose from a list or display a message.
 
   int OLEDDisplayTimeout = 10;                 // oled menu display timeout (seconds)
 
+  int itemTrigger = 1;                         // rotary encoder - counts per click
 
+  #define OLED_ADDR 0x3C                       // OLED i2c address
+
+  #if defined(ESP8266)
+    // esp8266
+    const String boardType="ESP8266";
+    #define I2C_SDA D2                         // i2c pins
+    #define I2C_SCL D1
+    #define encoder0PinA  D5
+    #define encoder0PinB  D6
+    #define encoder0Press D7                   // button - Note: on esp8266 you can change this from d7 to d3 leaving d7 and d8 free to use 
+    
+  #elif defined(ESP32)
+    // esp32
+    const String boardType="ESP32";
+    #define I2C_SDA 21                         // i2c pins
+    #define I2C_SCL 22
+    #define encoder0PinA  13
+    #define encoder0PinB  14
+    #define encoder0Press 15                   // button 
+    
+  #elif defined (__AVR_ATmega328P__)
+    // Arduino Uno
+    const String boardType="Uno";
+    #define I2C_SDA A4                         // i2c pins
+    #define I2C_SCL A5
+    #define encoder0PinA  2
+    #define encoder0PinB  3
+    #define encoder0Press 4                    // button  
+  #else
+    #error Unsupported board - must be esp32, esp8266 or Arduino Uno
+  #endif
+
+    
   // -------------------------------------------------------------------------------------------------
 
-  
 
   //#include <MemoryFree.h>                    // used to display free memory on Arduino (useful as it can be very limited)
   #include <Adafruit_GFX.h>
   #include <Adafruit_SSD1306.h>
   
-  // rotary encoder, gpio pins vary depending on board being used
+  // rotary encoder
     volatile int16_t encoder0Pos = 0;         // current value selected with rotary encoder (updated in interrupt routine)
     volatile bool encoderPrevA = 0;           // used to debounced rotary encoder 
     volatile bool encoderPrevB = 0;           // used to debounced rotary encoder 
     bool reButtonState = 0;                   // current debounced state of the button
     uint32_t reButtonTimer = millis();        // time button state last changed
     int reButtonMinTime = 500;                // minimum milliseconds between allowed button status changes
-    #if defined(ESP8266)
-      // esp8266
-      const String boardType="ESP8266";
-      #define I2C_SDA D2                      // i2c pins
-      #define I2C_SCL D1
-      #define encoder0PinA  D5
-      #define encoder0PinB  D6
-      #define encoder0Press D7                // button - Note: on esp8266 you can change this from d7 to d3 leaving d7 and d8 free to use 
-    #elif defined(ESP32)
-      // esp32
-      const String boardType="ESP32";
-      #define I2C_SDA 21                      // i2c pins
-      #define I2C_SCL 22
-      #define encoder0PinA  13
-      #define encoder0PinB  14
-      #define encoder0Press 15                // button 
-    #elif defined (__AVR_ATmega328P__)
-      // Arduino Uno
-      const String boardType="Uno";
-      #define I2C_SDA A4                      // i2c pins
-      #define I2C_SCL A5
-      #define encoder0PinA  2
-      #define encoder0PinB  3
-      #define encoder0Press 4                 // button  
-    #else
-      #error Unsupported board - must be esp32, esp8266 or Arduino Uno
-    #endif
   
   // oled menu
     const byte menuMax = 5;                   // max number of menu items
@@ -92,13 +98,11 @@ choose from a list or display a message.
     const byte lineSpace2 = 16;               // line spacing (4 lines)
     String menuOption[menuMax];               // options displayed in menu
     byte menuCount = 0;                       // which menu item is curently highlighted 
-    int itemTrigger = 1;                      // rotary encoder - counts per tick
     String menuTitle = "";                    // current menu ID number (blank = none)
     byte menuItemClicked = 100;               // menu item has been clicked flag (100=none)
     uint32_t lastREActivity = 0;              // time last activity was seen on rotary encoder
   
   // oled SSD1306 display connected to I2C (SDA, SCL pins)
-    #define OLED_ADDR 0x3C                    // OLED i2c address
     #define SCREEN_WIDTH 128                  // OLED display width, in pixels
     #define SCREEN_HEIGHT 64                  // OLED display height, in pixels
     #define OLED_RESET -1                     // Reset pin # (or -1 if sharing Arduino reset pin)
