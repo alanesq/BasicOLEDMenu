@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 07Dec20
+ *      OLED display Menu System - i2c version SSD1306 - 06Dec20
  * 
  *             https://github.com/alanesq/BasicOLEDMenu                      
  *             
@@ -9,10 +9,12 @@
       
  oled pins: esp8266: sda=d2, scl=d1    
             esp32: sda=21, scl=22
+            Uno: sda=A4 , scl=A5
  oled address = 3C 
  rotary encoder pins: 
             esp8266: d5, d6, d7 (button)
             esp32: 13, 14, 15
+            Uno: 2, 3, 4
  Note: on esp8266 you can change the button from d7 to d3 instead leaving d7 and d8 free to use 
 
  
@@ -34,7 +36,7 @@ choose from a list or display a message.
   // settings
 
   const String stitle = "simple_menu";         // script title
-  const String sversion = "06Dec20";           // script version
+  const String sversion = "07Dec20";           // script version
 
   bool serialDebug = 1;                        // enable debug info on serial port
 
@@ -59,15 +61,27 @@ choose from a list or display a message.
     #if defined(ESP8266)
       // esp8266
       const String boardType="ESP8266";
+      #define I2C_SDA D2                      // i2c pins
+      #define I2C_SCL D1
       #define encoder0PinA  D5
       #define encoder0PinB  D6
       #define encoder0Press D7                // button - Note: on esp8266 you can change this from d7 to d3 leaving d7 and d8 free to use 
     #elif defined(ESP32)
       // esp32
       const String boardType="ESP32";
+      #define I2C_SDA 21                      // i2c pins
+      #define I2C_SCL 22
       #define encoder0PinA  13
       #define encoder0PinB  14
       #define encoder0Press 15                // button 
+    #elif defined (__AVR_ATmega328P__)
+      // Arduino Uno
+      const String boardType="Uno";
+      #define I2C_SDA A4                      // i2c pins
+      #define I2C_SCL A5
+      #define encoder0PinA  2
+      #define encoder0PinB  3
+      #define encoder0Press 4                 // button  
     #else
       #error Unsupported board - must be esp32, esp8266 or Arduino Uno
     #endif
@@ -209,6 +223,7 @@ void setup() {
     pinMode(encoder0PinB, INPUT);
 
   // initialise the oled display
+    Wire.begin(I2C_SDA,I2C_SCL);
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
       Serial.println(("\nError initialising the oled display"));
     }
@@ -229,8 +244,6 @@ void setup() {
     delay(2500);
 
   // Interrupt for reading the rotary encoder position
-    encoderPrevA = digitalRead(encoder0PinA);    // update previous states 
-    encoderPrevB = digitalRead(encoder0PinB);
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
   Main_Menu();    // start the menu displaying - see menuItemActions() to alter the menus
@@ -536,31 +549,37 @@ void exitMenu() {
 //  --------------------------------------
 
 // rotary encoder interrupt routine to update position counter when turned
+//      interrupt info: https://www.gammon.com.au/forum/bbshowpost.php?id=11488
 
 #if defined (__AVR_ATmega328P__)
   void doEncoder() {
 #elif defined ESP32
-  void IRAM_ATTR doEncoder() {
-#else
-  void ICACHE_RAM_ATTR doEncoder() {
+  IRAM_ATTR void doEncoder() {
+#else   // esp8266
+  ICACHE_RAM_ATTR void doEncoder() {
 #endif
       
   bool pinA = digitalRead(encoder0PinA);
   bool pinB = digitalRead(encoder0PinB);
 
-  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change since last time (i.e. bounce)
+  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
+  
+  if (serialDebug){
+    Serial.print(pinA);
+    Serial.print(",");
+    Serial.println(pinB);
+  }
 
-  // same direction (alternating between 0,1 and 1,0 in one direction or 1,1 and 0,0 in the other direction)
-         if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
-    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
-    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 1) encoder0Pos += 1;
-    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 0) encoder0Pos += 1;
-    
   // change of direction
-    else if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 0) encoder0Pos += 1;   
-    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 1) encoder0Pos += 1;
-    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
-    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
+    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
+  // same direction
+    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
+    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
+    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
 
   // update previous readings
     encoderPrevA = pinA;
