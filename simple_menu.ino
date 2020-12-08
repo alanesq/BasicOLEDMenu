@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 06Dec20
+ *      OLED display Menu System - i2c version SSD1306 - 08Dec20
  * 
  *             https://github.com/alanesq/BasicOLEDMenu                      
  *             
@@ -296,9 +296,34 @@ void setMenu(byte inum, String iname) {
   }
 }
 
-
 //  --------------------------------------
 
+// confirm that a requested action is not a mistake
+//   returns 1 if confirmed
+
+bool confirmActionRequired() {
+  display.clearDisplay();  
+  display.setTextSize(2);
+  display.setTextColor(WHITE,BLACK);
+  display.setCursor(0, lineSpace2 * 0);
+  display.print("HOLD");
+  display.setCursor(0, lineSpace2 * 1);
+  display.print("BUTTON TO");  
+  display.setCursor(0, lineSpace2 * 2);
+  display.print("CONFIRM!");
+  display.display();
+  
+  delay(2000);
+  display.clearDisplay();  
+  display.display();
+
+  exitMenu();        // close menu
+
+  if (digitalRead(encoder0Press) == LOW) return 1;        // if button still pressed
+  return 0;
+}
+
+//  --------------------------------------
 
 // display menu on oled
 void staticMenu() {
@@ -566,40 +591,28 @@ void exitMenu() {
   bool pinA = digitalRead(encoder0PinA);
   bool pinB = digitalRead(encoder0PinB);
 
-  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change
-  
-  if (serialDebug){
-    Serial.print(pinA);
-    Serial.print(",");
-    Serial.println(pinB);
-  }
+  if ( (encoderPrevA == pinA && encoderPrevB == pinB) ) return;  // no change since last time (i.e. reject bounce)
 
+  // same direction (alternating between 0,1 and 1,0 in one direction or 1,1 and 0,0 in the other direction)
+         if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 1) encoder0Pos += 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 0) encoder0Pos += 1;
+    
   // change of direction
-    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
-  // same direction
-    if ( (encoderPrevA == 1 && encoderPrevB == 0) && (pinA == 0 && pinB == 1) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 1) && (pinA == 1 && pinB == 0) ) encoder0Pos -= 1;
-    if ( (encoderPrevA == 0 && encoderPrevB == 0) && (pinA == 1 && pinB == 1) ) encoder0Pos += 1;
-    if ( (encoderPrevA == 1 && encoderPrevB == 1) && (pinA == 0 && pinB == 0) ) encoder0Pos += 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 0 && pinA == 0 && pinB == 0) encoder0Pos += 1;   
+    else if (encoderPrevA == 0 && encoderPrevB == 1 && pinA == 1 && pinB == 1) encoder0Pos += 1;
+    else if (encoderPrevA == 0 && encoderPrevB == 0 && pinA == 1 && pinB == 0) encoder0Pos -= 1;
+    else if (encoderPrevA == 1 && encoderPrevB == 1 && pinA == 0 && pinB == 1) encoder0Pos -= 1;
 
+    else if (serialDebug) Serial.println("Error: invalid rotary encoder pin state - prev=" + String(encoderPrevA) + "," 
+                                          + String(encoderPrevB) + " new=" + String(pinA) + "," + String(pinB));
+    
   // update previous readings
     encoderPrevA = pinA;
     encoderPrevB = pinB;
 
 }
 
-
-// // alternative method (doesn't handle change of direction very well)
-//  if (pinA != encoderPrevA) {
-//    encoderPrevA = pinA;
-//    if (pinB != encoderPrevB) {
-//      encoderPrevB = pinB;
-//      if (pinA == pinB) encoder0Pos += 1;
-//      else encoder0Pos -= 1;
-//    }
-//  }
 
 // ---------------------------------------------- end ----------------------------------------------
