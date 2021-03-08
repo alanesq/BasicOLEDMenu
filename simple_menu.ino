@@ -227,7 +227,7 @@ void setup() {
     pinMode(encoder0PinB, INPUT);
 
   // initialise the oled display
-    Wire.begin(I2C_SDA,I2C_SCL);
+    Wire.begin(I2C_SDA,I2C_SCL);    // if you get an error it may be the board you are using does not allow defining the pins in which case try:  Wire.begin();
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
       Serial.println(("\nError initialising the oled display"));
     }
