@@ -1,10 +1,10 @@
 <h1>Basic OLED with rotary encoder Menu for ESP8266/ESP32/Arduino</h1>
-Note: The very limit memory on an Arduino Uno proved to be a problem and you have to disable DEBUG to have enough free memory for this to work
+Note: The limited memory on an Arduino Uno proved to be a problem and you have to disable DEBUG to have enough free memory for this to work
 <p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
 <pre>
 A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder
-using only 5 io pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
+using only 5 gpio pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
 
 Uses libraries:   Adafruit_SSD1306 and Adafruit_GFX_Library
 ESP8266 addon package = v2.5.2     (I find problems if useing a newer version)
