@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  
- *      OLED display Menu System - i2c version SSD1306 - 08Dec20
+ *      OLED display Menu System - i2c version SSD1306 - 31Aug21
  * 
  *             https://github.com/alanesq/BasicOLEDMenu                      
  *             
