@@ -288,7 +288,7 @@ void loop() {
 void setMenu(byte inum, String iname) {
   if (inum >= menuMax) return;    // invalid number
   if (iname == "") {              // clear all menu items
-    for (int i; i < menuMax; i++)  menuOption[i] = "";
+    for (int i=0; i < menuMax; i++)  menuOption[i] = "";
     menuCount = 0;                // move highlight to top menu item
   } else {
     menuOption[inum] = iname;
