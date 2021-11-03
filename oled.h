@@ -14,10 +14,11 @@
  Notes:   text size 1 = 21 x 8 characters
           text size 2 = 10 x 4
 
- for more oled info    see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
+ For more oled info    see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
                     
-
+ See the "custom menus go here" section for example of how to use the menus
  
+  
  **************************************************************************************************/
 
 
@@ -47,15 +48,15 @@
 //    #define OLEDD 0                           // oled data pin
 
 
+    int menuTimeout = 20;                     // menu inactivity timeout (seconds)
     const bool menuLargeText = 0;             // If larger text should be displayed to make reading menus easier
     const int maxMenuItems = 20;              // max number of items used in any of the menus
-    int OLEDDisplayTimeout = 10;              // inactivity trigger time on rotary encoder (seconds)
     const int itemTrigger = 1;                // rotary encoder - counts per tick (varies between encoders usually 1 or 2)
     const int topLine = 18;                   // y position of second bank of menu display (18 with two colour displays)
     const byte lineSpace1 = 9;                // line spacing for textsize 1
     const byte lineSpace2 = 17;               // line spacing for textsize 2
     const int displayMaxLines = 5;            // max lines that can be displayed in lower section of display in textsize1
-    const bool reButtonPressedState = 0;      // gpio pin status when button is pressed
+    const bool reButtonPressedState = 0;      // gpio pin status when the button is pressed
     
 
 // -------------------------------------------------------------------------------------------------
@@ -67,7 +68,9 @@
   void serviceMenu();
   int checkEncoder();
   void serviceValue();
-  void createList(int, String[]);
+  void createList(String, int, String *_list);
+  void displayMessage(String, String);
+  void defaultMenu();
   
 
 // menus
@@ -75,7 +78,8 @@
       off,                                  // disable menus
       menu,                                 // live menu
       list,                                 // choose from a suplied list of options
-      value                                 // enter a value
+      value,                                // enter a value
+      message                               // display a message
   };    
   menuModes menuMode = off;                 // default mode at startup
   String menuTitle = "";                   // title of active menu
@@ -83,6 +87,7 @@
   int selectedMenuItem = 0;                 // when a menu item is selected it is stored here until actioned
   int highlightedMenuItem = 0;              // which menu item is highlighted 
   String menuItems[maxMenuItems+1];         // store for the menu item titles 
+  uint32_t lastMenuActivity = 0;             // time the menu last had any activity (can be used for timeout)
 
 // value entry
   int mValueEntered = 0;                    // store for number entered by value entry menu  
@@ -112,8 +117,15 @@
 //                                        custom menus go here
 // -------------------------------------------------------------------------------------------------
 
-// forward declarations
+// forward declarations for this section
   void value1();
+  void demoMenu();
+
+  
+// called when the default menu is required
+void defaultMenu() {
+  demoMenu();
+}
   
 
 // demonstration menu 
@@ -121,14 +133,14 @@ void demoMenu() {
   resetMenu();                  // clear any previous menu
   menuMode = menu;              // enable menu mode
   noOfMenuItems = 8;            // set the number of items in this menu
-  menuTitle = "demo_menu";          // menus title (used to identify it) 
+  menuTitle = "demo_menu";      // menus title (used to identify it) 
   menuItems[1] = "item1";       // set the menu items
   menuItems[2] = "item2";
   menuItems[3] = "item3";
   menuItems[4] = "item4";
   menuItems[5] = "item5";
-  menuItems[6] = "item6";
-  menuItems[7] = "enter value";
+  menuItems[6] = "Message";
+  menuItems[7] = "Enter value";
   menuItems[8] = "Menus Off";
 }  // demoMenu
 
@@ -136,8 +148,9 @@ void demoMenu() {
 void menuActions() {
   // actions when an item is selected in "demo_menu"
     if (menuTitle == "demo_menu") {
-      if (selectedMenuItem == 2) {         // demo_menu item 2 selected
-        if (serialDebug) Serial.println("demo_menu second item selected");
+      if (selectedMenuItem == 6) {         // demo_menu item 2 selected
+        if (serialDebug) Serial.println("demo_menu message selected");
+        displayMessage("Message", "this is a demo message");
       }      
       if (selectedMenuItem == 7) {         // enter a value
         if (serialDebug) Serial.println("demo_menu enter value selected");
@@ -184,7 +197,7 @@ void menuValues() {
   // action when value entered for "enter value"
   if (menuTitle == "demo_value") {
     if (serialDebug) Serial.println("Value entered for 'demo_value' was " + String(mValueEntered));
-    demoMenu();
+    resetMenu();         // use 'resetMenu()' here to turn menus off after value entered - or use 'defaultMenu()' to re-start the default menu
   }
 }
 
@@ -215,20 +228,14 @@ void oledSetup() {
     encoder0Pos = 0;   
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
-//  // display startup message
-//    display.clearDisplay();    
-//    display.setTextColor(WHITE);
-//    display.setTextSize(1);
-//    display.setCursor(0, topLine);
-//    display.println("hello");
-//    display.display();    
 
   resetMenu();         // reset menu system
-  //demoMenu();          // enable demo_menu
-
-  // create a demonstration menu from a list
-    String q[]={"main menu", "2", "3", "4", "5", "6"};
-    createList(6, q);      // enable demo list
+  
+  defaultMenu();       // start the default menu
+  
+//  // create a demonstration menu from a list
+//    String tList[]={"main menu", "2", "3", "4", "5", "6"};
+//    createList("demo_list", 6, &tList[0]);   
     
 }
 
@@ -240,16 +247,25 @@ void oledSetup() {
 
 void oledLoop() {
 
-  if (menuMode == off) return;      // if menu system is turned off do nothing
-
   // update rotary encoder button status
     if (digitalRead(encoder0Press) != reButtonState) {       // if status has changed
       delay(50);
       if (digitalRead(encoder0Press) != reButtonState) {     // debounce
         reButtonState = digitalRead(encoder0Press);
-        if (reButtonState == reButtonPressedState) reButtonChanged = 1;         // buton has been pressed
-        else reButtonChanged = -1;                                              // buton has been released
+        if (reButtonState == reButtonPressedState) {
+          reButtonChanged = 1;                               // buton has been pressed
+          if (menuMode == off) defaultMenu();                // start default menu if menus are off
+        }
+        else reButtonChanged = -1;                           // buton has been released
       }
+    }  
+
+  if (menuMode == off) return;      // if menu system is turned off do nothing more
+
+  // if menu displayed for too long then turn it off
+    if ( (unsigned long)(millis() - lastMenuActivity) > (menuTimeout * 1000) ) {
+      resetMenu();  
+      return;
     }
 
   // menus
@@ -266,6 +282,11 @@ void oledLoop() {
       menuValues();      // a value has been entered
     }
   }
+
+  // message
+  if (menuMode == message) {
+    if (reButtonChanged == 1) resetMenu();       // clear when button pressed
+  }
   
 }
 
@@ -280,14 +301,17 @@ void serviceMenu() {
       if (encoder0Pos >= itemTrigger) {
         encoder0Pos -= itemTrigger;
         highlightedMenuItem++;
+        lastMenuActivity = millis();   // log time 
       }
       if (encoder0Pos <= -itemTrigger) {
         encoder0Pos += itemTrigger;
         highlightedMenuItem--;
+        lastMenuActivity = millis();   // log time 
       }      
       if (reButtonChanged == 1) {   
         reButtonChanged = 0;
         selectedMenuItem = highlightedMenuItem;     // flag that the item has been selected 
+        lastMenuActivity = millis();   // log time 
         if (serialDebug) Serial.println("menu '" + menuTitle + "' item '" + menuItems[highlightedMenuItem] + "' selected");
       }  
 
@@ -328,13 +352,20 @@ void serviceValue() {
     if (encoder0Pos >= itemTrigger) {
       encoder0Pos -= itemTrigger;
       mValueEntered-= mValueStep;
+      lastMenuActivity = millis();   // log time 
     }
     if (encoder0Pos <= -itemTrigger) {
       encoder0Pos += itemTrigger;
       mValueEntered+= mValueStep;
     }      
-    if (mValueEntered < mValueLow) mValueEntered = mValueLow;
-    if (mValueEntered > mValueHigh) mValueEntered = mValueHigh;
+    if (mValueEntered < mValueLow) {
+      mValueEntered = mValueLow;
+      lastMenuActivity = millis();   // log time 
+    }
+    if (mValueEntered > mValueHigh) {
+      mValueEntered = mValueHigh;
+      lastMenuActivity = millis();   // log time 
+    }
 
     // title
       display.clearDisplay(); 
@@ -355,13 +386,15 @@ void serviceValue() {
 // ----------------------------------------------------------------
 //                           -list create
 // ----------------------------------------------------------------
-// create a menu from suplied list
+// create a menu from a list 
+// e.g.       String tList[]={"main menu", "2", "3", "4", "5", "6"};
+//            createList("demo_list", 6, &tList[0]);  
 
-void createList(int _noOfElements, String _list[]) {
+void createList(String _title, int _noOfElements, String *_list) {
   resetMenu();                      // clear any previous menu
   menuMode = menu;                  // enable menu mode
   noOfMenuItems = _noOfElements;    // set the number of items in this menu
-  menuTitle = "demo_list";          // menus title (used to identify it) 
+  menuTitle = _title;               // menus title (used to identify it) 
 
   for (int i=1; i <= _noOfElements; i++) {
     menuItems[i] = _list[i-1];        // set the menu items  
@@ -370,18 +403,41 @@ void createList(int _noOfElements, String _list[]) {
 
 
 // ----------------------------------------------------------------
+//            -message display until button is pressed 
+// ----------------------------------------------------------------
+ void displayMessage(String _title, String _message) {
+  resetMenu();
+  menuMode = message;
+  
+  display.clearDisplay();    
+  display.setTextColor(WHITE);
+  display.setTextSize(2);
+  display.setCursor(0, 0);
+  display.println(_title);
+  display.setTextSize(1);
+  display.setCursor(0, lineSpace2);
+  display.println(_message);
+  display.display();     
+ }
+
+
+// ----------------------------------------------------------------
 //                        -reset menu system
 // ----------------------------------------------------------------
 
 void resetMenu() {
-  menuMode = off;
-  selectedMenuItem = 0;
-  encoder0Pos = 0;
-  noOfMenuItems = 0;
-  menuTitle = "";
-  highlightedMenuItem = 0;
-  reButtonChanged = 0;
-  mValueEntered = 0;
+  // reset all menu variables / flags
+    menuMode = off;
+    selectedMenuItem = 0;
+    encoder0Pos = 0;
+    noOfMenuItems = 0;
+    menuTitle = "";
+    highlightedMenuItem = 0;
+    reButtonChanged = 0;
+    mValueEntered = 0;
+  
+  lastMenuActivity = millis();   // log time 
+  
   // clear oled display
     display.clearDisplay();    
     display.display(); 
