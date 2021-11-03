@@ -49,13 +49,14 @@
 
 
     int menuTimeout = 20;                     // menu inactivity timeout (seconds)
-    const bool menuLargeText = 0;             // If larger text should be displayed to make reading menus easier
+    const bool menuLargeText = 1;             // If larger text should be displayed to make reading menus easier
     const int maxMenuItems = 20;              // max number of items used in any of the menus
     const int itemTrigger = 1;                // rotary encoder - counts per tick (varies between encoders usually 1 or 2)
     const int topLine = 18;                   // y position of second bank of menu display (18 with two colour displays)
     const byte lineSpace1 = 9;                // line spacing for textsize 1
     const byte lineSpace2 = 17;               // line spacing for textsize 2
     const int displayMaxLines = 5;            // max lines that can be displayed in lower section of display in textsize1
+    const int MaxMenuTitleLength = 10;        // max characters on title when using text size 2
     const bool reButtonPressedState = 0;      // gpio pin status when the button is pressed
     
 
@@ -150,7 +151,8 @@ void menuActions() {
     if (menuTitle == "demo_menu") {
       if (selectedMenuItem == 6) {         // demo_menu item 2 selected
         if (serialDebug) Serial.println("demo_menu message selected");
-        displayMessage("Message", "this is a demo message");
+        displayMessage("Message", "Hello                This is a demo       message.");
+        //                         < line 1            >< line 2            >< line 3            >< line 4             >                                
       }      
       if (selectedMenuItem == 7) {         // enter a value
         if (serialDebug) Serial.println("demo_menu enter value selected");
@@ -324,10 +326,15 @@ void serviceMenu() {
       if (highlightedMenuItem < 1) highlightedMenuItem = 1;
 
     // title
-      display.setTextSize(2);    
       display.setCursor(0, 0);
-      if (menuLargeText) display.println(menuItems[highlightedMenuItem]);
-      else display.println(menuTitle);
+      if (menuLargeText) {
+        display.setTextSize(2); 
+        display.println(menuItems[highlightedMenuItem].substring(0, MaxMenuTitleLength));
+      } else {
+        if (menuTitle.length() > MaxMenuTitleLength) display.setTextSize(1);
+        else display.setTextSize(2);          
+        display.println(menuTitle);
+      }
 
     // menu
       display.setTextSize(1);
@@ -367,11 +374,13 @@ void serviceValue() {
       lastMenuActivity = millis();   // log time 
     }
 
+    display.clearDisplay(); 
+    display.setTextColor(WHITE); 
+    
     // title
-      display.clearDisplay(); 
-      display.setTextColor(WHITE);  
-      display.setTextSize(1);    
       display.setCursor(0, 0);
+      if (menuTitle.length() > MaxMenuTitleLength) display.setTextSize(1);
+      else display.setTextSize(2);          
       display.println(menuTitle);
       
   // display vale entry on oled
@@ -403,21 +412,32 @@ void createList(String _title, int _noOfElements, String *_list) {
 
 
 // ----------------------------------------------------------------
-//            -message display until button is pressed 
+//                         -message display 
 // ----------------------------------------------------------------
+
  void displayMessage(String _title, String _message) {
   resetMenu();
   menuMode = message;
-  
+
   display.clearDisplay();    
   display.setTextColor(WHITE);
-  display.setTextSize(2);
-  display.setCursor(0, 0);
-  display.println(_title);
-  display.setTextSize(1);
-  display.setCursor(0, lineSpace2);
-  display.println(_message);
-  display.display();     
+
+  // title
+    display.setCursor(0, 0);
+    if (menuLargeText) {
+      display.setTextSize(2); 
+      display.println(_title.substring(0, MaxMenuTitleLength));
+    } else {
+      if (_title.length() > MaxMenuTitleLength) display.setTextSize(1);
+      else display.setTextSize(2);          
+      display.println(menuTitle);
+    }
+
+  // message
+    display.setCursor(0, lineSpace2);
+    display.setTextSize(1);
+    display.println(_message);
+    display.display();     
  }
 
 
