@@ -10,26 +10,10 @@ A very simple to use, cheap to build and simple to wire menu system using an ole
 using only 5 gpio pins, a very cheap 128x64 SSD1306 oled and a rotary encoder board
 
 Uses libraries:   Adafruit_SSD1306 and Adafruit_GFX_Library
-ESP8266 addon package = v2.5.2     (I find problems if useing a newer version)
-    from http://arduino.esp8266.com/stable/package_esp8266com_index.json
     
-See the "customise the menus below" section of the sketch for examples of how to use it.
 It gives basic menus, the ability to enter a numerical value or choose from a list of options.
-
-Thanks to:  https://create.arduino.cc/projecthub/yilmazyurdakul/arduino-oled-encoder-simple-menu-system-f9baa1
-which I used as a starting point for this project.
-
- oled pins: esp8266: sda=d2, scl=d1    
-            esp32: sda=21, scl=22
-            Arduino: sda=A4, scl=A5
- oled address = 3C 
- rotary encoder pins: 
-            esp8266: d5, d6, d7 (button)
-            esp32: 13, 14, 15
-            Arduino: 2, 3, 4 (button)
             
-The sketch displays a menu on the oled display and when an item is selected it sets a flag and 
-waits until the event is acted upon.  Max. menu items on a 128x64 oled is four.
+The sketch uses the cheap 128x64 oled displays but the settings can be changed to work with different size displays.
 
 If you are new to the esp8266 using one of these OLED displays would be a very interesting and cheap introduction to using them.
 If you search eBay for "esp8266 nodemcu ch340g v3" you should be able to pick up an esp8266 module for around £3.
