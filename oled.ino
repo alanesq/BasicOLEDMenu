@@ -150,8 +150,7 @@ void menuActions() {
     if (menuTitle == "demo_menu") {
       if (selectedMenuItem == 1) {         // demo_menu item 1 selected - show value
         if (serialDebug) Serial.println("demo_menu message selected");
-        String tMess = "The current value    is set to " + String(demonstrationValue);
-        //              < line 1            >< line 2            >< line 3            >< line 4             >           
+        String tMess = "The current value\nis set to " + String(demonstrationValue);   // 21 chars per line, "\n" = next line        
         displayMessage("Message", tMess);                             
       }     
       if (selectedMenuItem == 2) {         // set to 0
@@ -457,6 +456,8 @@ void createList(String _title, int _noOfElements, String *_list) {
 // ----------------------------------------------------------------
 //                         -message display 
 // ----------------------------------------------------------------
+// 21 characters per line, use "\n" for next line
+// assistant:  <     line 1        ><     line 2        ><     line 3        ><     line 4         >  
 
  void displayMessage(String _title, String _message) {
   resetMenu();
