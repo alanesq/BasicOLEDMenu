@@ -209,11 +209,12 @@ void value1() {
 // actions for value entered put in here
 void menuValues() {
   
-  // action when value entered for "enter value"
+  // action when value is entered for "demo_value"
   if (menuTitle == "demo_value") {
-    if (serialDebug) Serial.println("Value entered for 'demo_value' was " + String(mValueEntered));
-    demonstrationValue = mValueEntered;
-    defaultMenu();         // use 'resetMenu()' here to turn menus off after value entered - or use 'defaultMenu()' to re-start the default menu
+    String tString = String(mValueEntered);
+    if (serialDebug) Serial.println("The value " + tString + " was entered");
+    displayMessage("ENTERED", "\nYou entered\nthe value\n    " + tString);
+    // alternatively use 'resetMenu()' here to turn menus off after value entered - or use 'defaultMenu()' to re-start the default menu
   }
   
 }
@@ -262,9 +263,10 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(encoder0PinA), doEncoder, CHANGE); 
 
 
-  resetMenu();         // reset menu system
+  // display greeting message - pressing button will start menu 
+    displayMessage("STARTED", "\nMenu system\ndemonstration\nsketch");       
   
-  defaultMenu();       // start the default menu
+  //defaultMenu();       // start the default menu
     
 }
 
