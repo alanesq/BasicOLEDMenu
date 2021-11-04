@@ -18,6 +18,10 @@
 
                     
  See the "menus below here" section for examples of use
+ The menu is none blocking so your sketch can carry on with other tasks whilst the menu is in use.
+ When a menu item is selected it is actioned in the 'menuActions()' section
+
+ Note: If the desplay becomes corrupted it may be a bad contact on the rotary encoder.
  
   
  **************************************************************************************************/
