@@ -26,6 +26,8 @@ My favourite development board is the esp32 lolin lite which can befound on eBay
 
 BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of 
 interest: https://github.com/alanesq/BasicWebserver
+Even if you do not use BasicWebserver, this version may be easier to include in your own projects 
+as you just have to include oled.h and add a single line to your setup and loop.
 
 for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
 
