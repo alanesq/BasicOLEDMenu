@@ -422,8 +422,14 @@ void serviceMenu() {
 
 int serviceValue(bool _blocking) {
 
-  const int _valueSpacing = 5;      // spacing tweak for the displayed value y position
-  if (_blocking) menuMode = blocking; 
+  const int _valueSpacingX = 30;      // spacing for the displayed value y position
+  const int _valueSpacingY = 5;       // spacing for the displayed value y position
+  
+  if (_blocking) {
+    menuMode = blocking; 
+    lastMenuActivity = millis();   // log time of last activity (for timeout)
+  }
+  uint32_t tTime;
   
   do {
     
@@ -455,29 +461,34 @@ int serviceValue(bool _blocking) {
         if (menuTitle.length() > MaxMenuTitleLength) display.setTextSize(1);
         else display.setTextSize(2);          
         display.println(menuTitle);
+        display.drawLine(0, topLine-1, display.width(), topLine-1, WHITE);       // draw horizontal line under title
         
       // value selected
-        display.setCursor(10, topLine + _valueSpacing);
+        display.setCursor(_valueSpacingX, topLine + _valueSpacingY);
         display.setTextSize(3);  
         display.println(mValueEntered);  
   
       // range
-        display.setCursor(0, topLine + (lineSpace1 * (displayMaxLines-1)) );
+        display.setCursor(0, display.height() - lineSpace1 - 1 );   // bottom of display
         display.setTextSize(1); 
         display.println(String(mValueLow) + " to " + String(mValueHigh));
-  
+
+      // bar
+        int Tlinelength = map(mValueEntered, mValueLow, mValueHigh, 0 , display.width());
+        display.drawLine(0, display.height()-1, Tlinelength, display.height()-1, WHITE);  
+        
       display.display();  
 
       reUpdateButton();        // check status of button
+      tTime = (unsigned long)(millis() - lastMenuActivity);      // time since last activity
 
-  } while (_blocking && reButtonChanged != 1);        // if in blocking mode repeat until button is pressed
+  } while (_blocking && reButtonChanged != 1 && tTime < (menuTimeout * 1000));        // if in blocking mode repeat until button is pressed or timeout
 
   if (_blocking) menuMode = off;
    
   return mValueEntered;        // used when in blocking mode
           
 }
-
 
 
 // ----------------------------------------------------------------
