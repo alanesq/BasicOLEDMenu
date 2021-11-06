@@ -189,15 +189,11 @@ void menuActions() {
     // demonstrate usage of 'enter a value' (blocking) which is quick and easy but stops all other tasks until the value is entered
     if (selectedMenuItem == 6) {      
       if (serialDebug) Serial.println("demo_menu blocking enter a value selected");
-      menuTitle = "blocking";       // title 
-      mValueLow = 0;                // minimum value allowed
-      mValueHigh = 100;             // maximum value allowed
-      mValueStep = 1;               // step size
-      mValueEntered = 50;           // starting value  
-      int _entered = serviceValue(1);
-      Serial.println("The value entered was " + String(_entered));   
+      menuTitle = "blocking"; mValueLow = 0; mValueHigh = 100; mValueStep = 1; mValueEntered = 50;  // set parameters  
+      int tEntered = serviceValue(1);                                                               // request value
+      Serial.println("The value entered was " + String(tEntered));   
       defaultMenu();                                 
-    }     
+    }  
 
     // demonstrate usage of message
     if (selectedMenuItem == 7) {         
