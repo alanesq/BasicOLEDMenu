@@ -1,25 +1,14 @@
 /**************************************************************************************************
- *  
- *      OLED display simple none blocking menu System - i2c version SSD1306 - 05Nov21
- *                                   
- * 
- **************************************************************************************************
       
- The sketch displays a menu on the oled and when an item is selected it sets a 
- flag and waits until the event is acted upon.  Max menu items on a 128x64 oled 
- is four.
- 
- Notes:   text size 1 = 21 x 8 characters
-          text size 2 = 10 x 4
+ Basic menu system for use with oLED displays - 07Nov21
+                           https://github.com/alanesq/BasicOLEDMenu
 
  For more oled info    see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
 
-                    
- See the "menus below here" section for examples of use
- The menu is none blocking so your sketch can carry on with other tasks whilst the menu is in use.
- When a menu item is selected it is actioned in the 'menuActions()' section
-
- Note: If the desplay becomes corrupted it may be a bad contact on the rotary encoder.
+ See the "menus below here" section for examples of how to use the menus
+ 
+ Note: If you get garbage on the display and the device locking up etc. it may just be a poor connection 
+       to the rotary encoder
  
   
  **************************************************************************************************/
