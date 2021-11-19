@@ -31,4 +31,11 @@ as you just have to include oled.h and add a single line to your setup and loop.
 
 for more oled info see: https://randomnerdtutorials.com/guide-for-oled-display-with-arduino/
 
+Note: I had a lot of trouble finding some code which would work reliably with a rotary encoder 
+(i.e. the interupt section) but find this to be very good although this may not be the case with 
+all encoders?
+see these videos for more info: https://www.youtube.com/watch?v=b2uUYiGrS5Y
+If you start getting all sorts of garbled data on the oled it may be surprisingly an issue with 
+bad connections on the rotary encoder.
+
                                                            https://github.com/alanesq/BasicOLEDMen
