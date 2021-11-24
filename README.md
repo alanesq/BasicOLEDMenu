@@ -2,6 +2,7 @@
 
 This is a completely new/different sketch as of Nov21 as I decided to start again and create a version which is none blocking.  
 The old version oldVersion.ino is easier to use but will stop everything else whilst waiting for user input etc. 
+This will compile in either Arduino IDE or PlatformIO.
 
 <p align="center"><img src="/images/menu.jpg" width="80%"/></p>
 
@@ -16,6 +17,10 @@ An example is included showing how a value can be changed or displayed using thi
             
 The sketch uses the cheap 128x64 oled displays but the settings can be changed to work with different 
 size displays.
+I am very impressed with these displays, they are cheap, easy to use and despite being small very easy to read.
+I have seen reports of them being easily damaged by static but not experienced this myself.  If you have any 
+poor connections (especially to the rotary encoder) this can result in rubbish being displayed which can 
+make you think there is a fault with the display.
 
 If you are new to the esp8266 using one of these OLED displays would be a very good project for you 
 to try.
