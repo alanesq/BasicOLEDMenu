@@ -450,6 +450,10 @@ void serviceMenu() {
         else display.println(" ");
       }
 
+    //// how to display some updating info. on the menu screen
+    // display.setCursor(80, 25);
+    // display.println(millis());
+ 
     display.display();
 }
 
