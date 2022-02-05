@@ -4,6 +4,11 @@ This is a completely new/different sketch as of Nov21 as I decided to start agai
 The old version oldVersion.ino is easier to use but will stop everything else whilst waiting for user input etc. 
 This will compile in either Arduino IDE or PlatformIO.
 
+<table><tr>
+  <td><img height='400px' src="/images/menu.jpg" /></td>
+  <td><img height='400px' src="/images/project.png" /></td>
+</tr></table>   
+
 <p align="center"><img src="/images/menu.jpg" width="50%"/></p>
 
 <br>A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder.
