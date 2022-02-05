@@ -10,7 +10,7 @@ This will compile in either Arduino IDE or PlatformIO.
 </tr></table>  
 
 <br>A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder.
-I created it so I can quickly and easily add an oLed menu system to any new projects.
+I created it so I can quickly and easily add an oLed menu system to any new projects, as you can see it only requires 5 wires (plus power).
 <br>Uses libraries:   Adafruit_SSD1306 and Adafruit_GFX_Library
     
 <br>It gives basic menus, the ability to enter a numerical value or choose from a list.
