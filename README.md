@@ -7,9 +7,7 @@ This will compile in either Arduino IDE or PlatformIO.
 <table><tr>
   <td><img height='400px' src="/images/menu.jpg" /></td>
   <td><img height='400px' src="/images/project.png" /></td>
-</tr></table>   
-
-<p align="center"><img src="/images/menu.jpg" width="50%"/></p>
+</tr></table>  
 
 <br>A very simple to use, cheap to build and simple to wire menu system using an oled and rotary encoder.
 I created it so I can quickly and easily add an oLed menu system to any new projects.
