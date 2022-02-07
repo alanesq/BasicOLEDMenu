@@ -1,6 +1,8 @@
 /**************************************************************************************************
  *
- *      OLED display simple none blocking menu System - i2c version SSD1306 - 24Nov21
+ *      OLED display simple none blocking menu System on esp8266/esp32 - i2c version SSD1306 - 07Feb22
+ *      
+ *      from:  https://github.com/alanesq/BasicOLEDMenu
  *
  *
  **************************************************************************************************
@@ -34,12 +36,12 @@
 // ----------------------------------------------------------------
 
     //  esp32 lolin lite gpio pins
-    #define encoder0PinA  25                  // Rotary encoder gpio pin
-    #define encoder0PinB  33                  // Rotary encoder gpio pin
-    #define encoder0Press 32                  // Rotary encoder button gpio pin
-    #define OLEDC 26                          // oled clock pin (set to 0 for default)
-    #define OLEDD 27                          // oled data pin
-    #define OLEDE 0                           // oled enable pin
+      #define encoder0PinA  32                  // Rotary encoder gpio pin - 16
+      #define encoder0PinB  33                  // Rotary encoder gpio pin - 17
+      #define encoder0Press 23                  // Rotary encoder button gpio pin - 23
+      #define OLEDC 26                          // oled clock pin (set to -1 for default) - 26
+      #define OLEDD 27                          // oled data pin - 27
+      #define OLEDE -1                          // oled enable pin (set to -1 if not used)
 
 //    //  esp32 HiLetGo gpio pins - https://robotzero.one/heltec-wifi-kit-32/
 //    #define encoder0PinA  25                  // Rotary encoder gpio pin
@@ -61,7 +63,7 @@
       #define OLED_ADDR 0x3C                    // OLED i2c address
       #define SCREEN_WIDTH 128                  // OLED display width, in pixels (usually 128)
       #define SCREEN_HEIGHT 64                  // OLED display height, in pixels (64 for larger oLEDs)
-      #define OLED_RESET -1                     // Reset pin gpio (or -1 if sharing Arduino reset pin)
+      #define OLED_RESET -1                     // Reset pin gpio (-1 if sharing Arduino reset pin)
 
     // Misc
       const int serialDebug = 1;
@@ -82,7 +84,7 @@
 // -------------------------------------------------------------------------------------------------
 
 
-// forward declarations
+// forward declarations - required by PlatformIO
   void ICACHE_RAM_ATTR doEncoder();
   void demoMenu();
   void menuActions();
