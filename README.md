@@ -23,7 +23,7 @@ I created it so I can quickly and easily add an oLed menu to any new projects, a
 <br>If you are new to the esp8266 using one of these OLED displays would be a very good project for you to try.
 <br>earch ebay for "SSD1306 i2c" and you should be able to pick up an oled display like the one in the picture above for around £3.  Search for "ky-040" for a rotary encoder for around £1.
 
-<br>Although not working yet as apparently there is an issue with the oled library and the latest esp32 core, there is a copy of this sketch on the online simulator here:   https://wokwi.com/arduino/projects/319868062877614675
+<br>You can try it out on this online emulation: https://wokwi.com/arduino/projects/323967017900048980
 
 <br>BTW - I have incorporated all this in to my basicWebserver starting point sketch which may be of interest: https://github.com/alanesq/BasicWebserver
 <br>Even if you do not use BasicWebserver, this version may be easier to include in your own projects as you just have to include oled.h and add a single line to your setup and loop.
