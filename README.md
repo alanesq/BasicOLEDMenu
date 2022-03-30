@@ -37,4 +37,4 @@ I created it so I can quickly and easily add an oLed menu to any new projects, a
 <br><img height='200px' src="/misc/pcb.jpg" />
 
 
-                                                           https://github.com/alanesq/BasicOLEDMen
+                                                           https://github.com/alanesq/BasicOLEDMenu
