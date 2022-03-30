@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *
- *      OLED display simple none blocking menu System on esp8266/esp32 - i2c version SSD1306 - 07Feb22
+ *      OLED display simple none blocking menu System on esp8266/esp32 - i2c version SSD1306 - 30mar22
  *      
  *      from:  https://github.com/alanesq/BasicOLEDMenu
  *
@@ -334,36 +334,10 @@ void setup() {
 
 void loop() {
 
-  reUpdateButton();               // update rotary encoder button status (if pressed activate default menu)
-  if (menuMode == off) return;    // if menu system is turned off do nothing more
+  reUpdateButton();      // update rotary encoder button status (if pressed activate default menu)
+  menuUpdate();          // update or action the oled menu
 
-  // if no recent activity then turn oled off
-    if ( (unsigned long)(millis() - oledMenu.lastMenuActivity) > (menuTimeout * 1000) ) {
-      resetMenu();
-      return;
-    }
-
-    switch (menuMode) {
-
-      // if there is an active menu
-      case menu:
-        serviceMenu();
-        menuActions();
-        break;
-
-      // if there is an active none blocking 'enter value'
-      case value:
-        serviceValue(0);
-        if (rotaryEncoder.reButtonPressed) {                        // if the button has been pressed
-          menuValues();                                             // a value has been entered so action it
-          break;
-        }
-
-      // if a message is being displayed
-      case message:
-        if (rotaryEncoder.reButtonPressed == 1) defaultMenu();    // if button has been pressed return to default menu
-        break;
-    }
+ 
 
   // flash onboard led
     static uint32_t ledTimer = millis();
@@ -395,6 +369,44 @@ void reUpdateButton() {
       }
     }
     rotaryEncoder.encoderPrevButton = tReading;            // update last state read
+}
+
+
+// ----------------------------------------------------------------
+//                    -update the active menu
+// ----------------------------------------------------------------
+
+void menuUpdate() {
+
+  if (menuMode == off) return;    // if menu system is turned off do nothing more
+
+  // if no recent activity then turn oled off
+    if ( (unsigned long)(millis() - oledMenu.lastMenuActivity) > (menuTimeout * 1000) ) {
+      resetMenu();
+      return;
+    }
+
+    switch (menuMode) {
+
+      // if there is an active menu
+      case menu:
+        serviceMenu();
+        menuActions();
+        break;
+
+      // if there is an active none blocking 'enter value'
+      case value:
+        serviceValue(0);
+        if (rotaryEncoder.reButtonPressed) {                        // if the button has been pressed
+          menuValues();                                             // a value has been entered so action it
+          break;
+        }
+
+      // if a message is being displayed
+      case message:
+        if (rotaryEncoder.reButtonPressed == 1) defaultMenu();    // if button has been pressed return to default menu
+        break;
+    }
 }
 
 
