@@ -34,6 +34,7 @@ I created it so I can quickly and easily add an oLed menu to any new projects, a
 <br>See these videos for more info: https://www.youtube.com/watch?v=b2uUYiGrS5Y
 
 <br>If you have a cnc router there is a Fritzing file in the MISC folder I use for making PCBs which may be of interest.  It is in a format which is very basic but it allows me to modify it and create a PCB as quickly as possible.
+<br><img height='200px' src="/misc/pcb.jpg" />
 
 
                                                            https://github.com/alanesq/BasicOLEDMen
