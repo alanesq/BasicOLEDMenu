@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *
- *      OLED display simple none blocking menu System on esp8266/esp32 - i2c version SSD1306 - 30mar22
+ *      OLED display simple none blocking menu System on esp8266/esp32 - i2c version SSD1306 - 05Apr24
  *      
  *      from:  https://github.com/alanesq/BasicOLEDMenu
  *
@@ -406,6 +406,9 @@ void menuUpdate() {
       case message:
         if (rotaryEncoder.reButtonPressed == 1) defaultMenu();    // if button has been pressed return to default menu
         break;
+
+      default:
+        break;     
     }
 }
 
