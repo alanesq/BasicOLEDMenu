@@ -15,12 +15,17 @@
             9, Confirm key, GPIO 21
             
         Notes:
-          snow on screen means using wrong driver for the board (SH1106 or SSD1306)            
+          snow on screen means using wrong driver for the board (SH1106 or SSD1306)         
+          
+        Uses libraries:  Adafruit_GFX, ESP32Encoder, Adafruit_SSD1306, Adafruit_SH110X
 
 */
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
+
+#include <ESP32Encoder.h>    // rotary encoder
+ESP32Encoder encoder;
 
 // === TOGGLE DRIVER HERE ===
 // Comment this out to use SSD1306; uncomment to use SH1106
@@ -44,6 +49,7 @@
 #define ENCODER_A  16
 #define ENCODER_B  4
 #define SEL_BUTTON 17
+#define ROTARY_ENCODER_STEPS 2        // if rotary encoder is jumping 2 steps bet detent set this to 2 otherwise 1
 
 // --- The Menu Class ---
 class SimpleMenu {
@@ -122,8 +128,10 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n\nStarting Oled Sketch");  
   
-  pinMode(ENCODER_A, INPUT_PULLUP);
-  pinMode(ENCODER_B, INPUT_PULLUP);
+  // Rotary encoder
+  ESP32Encoder::useInternalWeakPullResistors = puType::up;        // Enable the weak pull up resistors
+  encoder.attachHalfQuad(ENCODER_A, ENCODER_B);            // Connect pins A and B
+  encoder.setCount(0);                                     // Set starting count to 0
   pinMode(SEL_BUTTON, INPUT_PULLUP);
 
   // i2c (oled)
@@ -166,16 +174,18 @@ void setup() {
 
 // -loop
 void loop() {
-  static int last_clk = HIGH;
-  int clk = digitalRead(ENCODER_A);
 
-  // Menu rotation
-  if (clk != last_clk && clk == LOW) {
-    if (digitalRead(ENCODER_B) != clk) currentMenu->next();
+  // rotary encoder
+  static long lastCount = 0;
+  long currentCount = encoder.getCount() / ROTARY_ENCODER_STEPS;
+
+  if (currentCount != lastCount) {
+    if (currentCount > lastCount) currentMenu->next();
     else currentMenu->prev();
+    
     currentMenu->draw();
+    lastCount = currentCount;
   }
-  last_clk = clk;
 
   // menu click
   if (digitalRead(SEL_BUTTON) == LOW) {
