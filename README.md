@@ -5,6 +5,9 @@ For either Arduino IDE or PlatformIO.
 Note: This is a completely different sketch as of Nov21 as I decided to start again and create a version which is none blocking.  
 The old version oldVersion.ino is easier to use but will stop everything else whilst waiting for user input etc. 
 
+You may like to have a look at "AlternativeMenu.ino" which is a different menu system I created along with an AI, it has pin allocations which make it
+easy to use with the chep combined oled and rotary encoder boards for sale on Aliexpress.
+
 <table><tr>
   <td><img height='400px' src="/images/menu.jpg" /></td>
   <td><img height='400px' src="/images/project.png" /></td>
